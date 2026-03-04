@@ -1,4 +1,5 @@
 import { useState } from "react";
+import FolderTree from "./components/FolderTree";
 
 export default function App() {
   const [msg, setMsg] = useState("");
@@ -12,8 +13,13 @@ export default function App() {
   return (
     <div style={{ padding: 40 }}>
       <h1>DataRoom</h1>
+  
       <button onClick={ping}>Ping backend</button>
       <div style={{ marginTop: 20 }}>{msg}</div>
+  
+      <hr style={{ margin: "20px 0" }} />
+  
+      <FolderTree />
     </div>
   );
 }
