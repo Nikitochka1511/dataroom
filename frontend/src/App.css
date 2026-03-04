@@ -1,42 +1,136 @@
+/* Reset-ish */
+* {
+  box-sizing: border-box;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* App shell */
+.appPage {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.appShell {
+  width: min(1200px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  overflow: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.appHeader {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.card {
-  padding: 2em;
+.appTitle {
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.read-the-docs {
-  color: #888;
+.appBody {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: 560px;
+}
+
+.sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px;
+  overflow: auto;
+}
+
+.content {
+  padding: 12px;
+  overflow: auto;
+}
+
+/* Controls */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnDanger {
+  border: 1px solid rgba(255, 90, 90, 0.35);
+}
+
+/* File table */
+.table {
+  margin-top: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tableHeader,
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 110px 90px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.tableHeader {
+  font-size: 12px;
+  opacity: 0.7;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.tableRow {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.fileName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileLink {
+  color: #7aa7ff;
+  text-decoration: none;
+}
+
+.fileLink:hover {
+  text-decoration: underline;
+}
+
+.muted {
+  opacity: 0.7;
+  font-size: 12px;
 }

@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import { fetchFolderTree, FolderNode } from "../api";
-import { createFolder } from "../api";
+import { fetchFolderTree, FolderNode, createFolder, deleteFolder } from "../api";
 
 function FolderItem({
     node,
     level,
     onSelect,
+    onDelete,
     selectedId,
   }: {
     node: FolderNode;
     level: number;
     onSelect: (id: number) => void;
+    onDelete: (id: number, parentId: number | null) => void;
     selectedId: number;
   }) {
     const isSelected = node.id === selectedId;
@@ -28,21 +29,46 @@ function FolderItem({
           }}
         >
           {node.name}
+          <button
+  onClick={(e) => {
+    e.stopPropagation();
+    onDelete(node.id, node.parent_id ?? null);
+  }}
+  style={{ marginLeft: 8 }}
+  title="Delete folder"
+>
+  🗑️
+</button>
         </span>
   
         {node.children.map((c) => (
-          <FolderItem
-            key={c.id}
-            node={c}
-            level={level + 1}
-            onSelect={onSelect}
-            selectedId={selectedId}
-          />
-        ))}
+  <FolderItem
+    key={c.id}
+    node={c}
+    level={level + 1}
+    onSelect={onSelect}
+    onDelete={onDelete}
+    selectedId={selectedId}
+  />
+))}
       </div>
     );
   }
 
+
+  function findNode(nodes: FolderNode[], id: number): FolderNode | null {
+    for (const n of nodes) {
+      if (n.id === id) return n;
+      const child = findNode(n.children || [], id);
+      if (child) return child;
+    }
+    return null;
+  }
+  
+  function subtreeContains(node: FolderNode, targetId: number): boolean {
+    if (node.id === targetId) return true;
+    return (node.children || []).some((c) => subtreeContains(c, targetId));
+  }
 
 
 export default function FolderTree({ selectedId, onSelect }: { selectedId: number, onSelect: (id: number) => void }) {
@@ -72,6 +98,29 @@ export default function FolderTree({ selectedId, onSelect }: { selectedId: numbe
     load(); 
   }
 
+  async function handleDelete(folderId: number, parentId: number | null) {
+    const ok = window.confirm("Delete this folder and everything inside it?");
+    if (!ok) return;
+  
+    const deletedNode = findNode(tree, folderId);
+    const selectedWillDie =
+      deletedNode ? subtreeContains(deletedNode, selectedId) : folderId === selectedId;
+  
+    try {
+      await deleteFolder(folderId);
+  
+      if (selectedWillDie) {
+        if (parentId) onSelect(parentId);
+        else onSelect(0);
+      }
+  
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+  
+
   useEffect(() => {
     load();
   }, []);
@@ -98,7 +147,16 @@ export default function FolderTree({ selectedId, onSelect }: { selectedId: numbe
       {tree.length === 0 ? (
         <div>No folders yet.</div>
       ) : (
-        tree.map((n) => <FolderItem key={n.id} node={n} level={0} onSelect={onSelect} selectedId={selectedId} />)
+        tree.map((n) => (
+            <FolderItem
+              key={n.id}
+              node={n}
+              level={0}
+              onSelect={onSelect}
+              onDelete={handleDelete}
+              selectedId={selectedId}
+            />
+          ))
       )}
     </div>
   );

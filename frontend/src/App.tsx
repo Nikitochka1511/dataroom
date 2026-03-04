@@ -1,30 +1,28 @@
 import { useState } from "react";
 import FolderTree from "./components/FolderTree";
 import FileList from "./components/FileList";
+import "./App.css";
 
 export default function App() {
-  const [msg, setMsg] = useState("");
-
-  const [selectedFolder, setSelectedFolder] = useState(1);
-
-  async function ping() {
-    const r = await fetch("http://127.0.0.1:5000/health");
-    const data = await r.json();
-    setMsg(JSON.stringify(data));
-  }
+  const [selectedFolder, setSelectedFolder] = useState(0);
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>DataRoom</h1>
-  
-      <button onClick={ping}>Ping backend</button>
-      <div style={{ marginTop: 20 }}>{msg}</div>
-  
-      <hr style={{ margin: "20px 0" }} />
-  
-      <FolderTree selectedId={selectedFolder} onSelect={setSelectedFolder} />
+    <div className="appPage">
+      <div className="appShell">
+        <div className="appHeader">
+          <div className="appTitle">DataRoom</div>
+        </div>
 
-      <FileList folderId={selectedFolder} />
+        <div className="appBody">
+          <aside className="sidebar">
+            <FolderTree selectedId={selectedFolder} onSelect={setSelectedFolder} />
+          </aside>
+
+          <main className="content">
+            <FileList folderId={selectedFolder} />
+          </main>
+        </div>
+      </div>
     </div>
   );
 }
