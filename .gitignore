@@ -7,6 +7,11 @@ backend/.venv/
 backend/__pycache__/
 backend/*.pyc
 
+# Uploaded files
+backend/storage/
+backend/dataroom.db
+backend/instance/
+
 # Env
 backend/.env
 
