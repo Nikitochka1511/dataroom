@@ -27,3 +27,26 @@ export type FolderNode = {
   
     if (!r.ok) throw new Error(`Failed to create folder: ${r.status}`);
   }
+
+  export async function uploadFile(file: File, folderId: number) {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("folder_id", String(folderId));
+  
+    const r = await fetch("http://127.0.0.1:5000/files/upload", {
+      method: "POST",
+      body: form,
+    });
+  
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error(t);
+    }
+  
+    return r.json();
+  }
+  
+  export async function listFiles(folderId: number) {
+    const r = await fetch(`http://127.0.0.1:5000/folders/${folderId}/files`);
+    return r.json();
+  }

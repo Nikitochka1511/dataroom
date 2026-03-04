@@ -1,5 +1,6 @@
 import { useState } from "react";
 import FolderTree from "./components/FolderTree";
+import FileList from "./components/FileList";
 
 export default function App() {
   const [msg, setMsg] = useState("");
@@ -20,6 +21,8 @@ export default function App() {
       <hr style={{ margin: "20px 0" }} />
   
       <FolderTree />
+      
+      <FileList folderId={1} />
     </div>
   );
 }
