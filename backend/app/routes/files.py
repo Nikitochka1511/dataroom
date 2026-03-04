@@ -60,7 +60,7 @@ def view_file(file_id: int):
     if not os.path.exists(rec.storage_path):
         return jsonify(error="file missing on disk"), 500
 
-    # браузер відкриє PDF
+
     return send_file(rec.storage_path, mimetype=rec.mime_type, as_attachment=False, download_name=rec.name)
 
 @bp.delete("/files/<int:file_id>")
@@ -69,14 +69,14 @@ def delete_file(file_id: int):
     if not rec:
         return jsonify(error="file not found"), 404
 
-    # 1) видаляємо з диска
+    
     try:
         if os.path.exists(rec.storage_path):
             os.remove(rec.storage_path)
     except OSError:
         return jsonify(error="failed to delete file from disk"), 500
 
-    # 2) видаляємо запис з БД
+    
     db.session.delete(rec)
     db.session.commit()
 

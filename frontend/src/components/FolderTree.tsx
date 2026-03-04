@@ -2,21 +2,50 @@ import { useEffect, useState } from "react";
 import { fetchFolderTree, FolderNode } from "../api";
 import { createFolder } from "../api";
 
-function FolderItem({ node, level }: { node: FolderNode; level: number }) {
-  return (
-    <div style={{ marginLeft: level * 16, padding: "4px 0" }}>
-      <span style={{ marginRight: 8 }}>📁</span>
-      {node.name}
-      {node.children.map((c) => (
-        <FolderItem key={c.id} node={c} level={level + 1} />
-      ))}
-    </div>
-  );
-}
+function FolderItem({
+    node,
+    level,
+    onSelect,
+    selectedId,
+  }: {
+    node: FolderNode;
+    level: number;
+    onSelect: (id: number) => void;
+    selectedId: number;
+  }) {
+    const isSelected = node.id === selectedId;
+  
+    return (
+      <div style={{ marginLeft: level * 16, padding: "4px 0" }}>
+        <span style={{ marginRight: 8 }}>📁</span>
+  
+        <span
+          onClick={() => onSelect(node.id)}
+          style={{
+            cursor: "pointer",
+            fontWeight: isSelected ? 700 : 400,
+            textDecoration: isSelected ? "underline" : "none",
+          }}
+        >
+          {node.name}
+        </span>
+  
+        {node.children.map((c) => (
+          <FolderItem
+            key={c.id}
+            node={c}
+            level={level + 1}
+            onSelect={onSelect}
+            selectedId={selectedId}
+          />
+        ))}
+      </div>
+    );
+  }
 
 
 
-export default function FolderTree() {
+export default function FolderTree({ selectedId, onSelect }: { selectedId: number, onSelect: (id: number) => void }) {
   const [tree, setTree] = useState<FolderNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -38,7 +67,7 @@ export default function FolderTree() {
   async function handleCreate() {
     if (!newName.trim()) return;
   
-    await createFolder(newName, 1); 
+    await createFolder(newName, selectedId); 
     setNewName("");
     load(); 
   }
@@ -69,7 +98,7 @@ export default function FolderTree() {
       {tree.length === 0 ? (
         <div>No folders yet.</div>
       ) : (
-        tree.map((n) => <FolderItem key={n.id} node={n} level={0} />)
+        tree.map((n) => <FolderItem key={n.id} node={n} level={0} onSelect={onSelect} selectedId={selectedId} />)
       )}
     </div>
   );

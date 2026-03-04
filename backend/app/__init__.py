@@ -9,7 +9,8 @@ import os
 
 def create_app():
     app = Flask(__name__)
-    app.config["STORAGE_DIR"] = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "storage")
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))  # -> backend/app/..
+    app.config["STORAGE_DIR"] = os.path.join(BASE_DIR, "storage")             # -> backend/storage
     CORS(app)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dataroom.db"

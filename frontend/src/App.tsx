@@ -5,6 +5,8 @@ import FileList from "./components/FileList";
 export default function App() {
   const [msg, setMsg] = useState("");
 
+  const [selectedFolder, setSelectedFolder] = useState(1);
+
   async function ping() {
     const r = await fetch("http://127.0.0.1:5000/health");
     const data = await r.json();
@@ -20,9 +22,9 @@ export default function App() {
   
       <hr style={{ margin: "20px 0" }} />
   
-      <FolderTree />
-      
-      <FileList folderId={1} />
+      <FolderTree selectedId={selectedFolder} onSelect={setSelectedFolder} />
+
+      <FileList folderId={selectedFolder} />
     </div>
   );
 }

@@ -50,3 +50,13 @@ export type FolderNode = {
     const r = await fetch(`http://127.0.0.1:5000/folders/${folderId}/files`);
     return r.json();
   }
+
+  export async function deleteFile(fileId: number): Promise<void> {
+    const r = await fetch(`http://127.0.0.1:5000/files/${fileId}`, {
+      method: "DELETE",
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error(t);
+    }
+  }
