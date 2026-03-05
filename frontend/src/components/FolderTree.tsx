@@ -112,7 +112,15 @@ function FolderItem({
   }
 
 
-    export default function FolderTree({ selectedId, onSelect }: { selectedId: number, onSelect: (id: number) => void }) {
+  export default function FolderTree({
+    selectedId,
+    onSelect,
+    reloadKey,
+  }: {
+    selectedId: number;
+    onSelect: (id: number) => void;
+    reloadKey: number;
+  }) {
   const [tree, setTree] = useState<FolderNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -219,7 +227,7 @@ function FolderItem({
 
   useEffect(() => {
     load();
-  }, []);
+  }, [reloadKey]);
  
   useEffect(() => {
     function closeMenu() {
@@ -249,7 +257,7 @@ function FolderItem({
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 16 }}>Folders</h2>
+        <h2 style={{ margin: 0, fontSize: 16 }}>Documents</h2>
       </div>
   
       {tree.length === 0 ? (

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import FolderTree from "./components/FolderTree";
 import FileList from "./components/FileList";
+import QuickActions from "./components/QuickActions";
 import "./App.css";
+
 
 const API_BASE = "http://127.0.0.1:5000";
 
@@ -21,6 +23,8 @@ function openCenteredPopup(url: string, title: string, w = 520, h = 700) {
 
 export default function App() {
   const [selectedFolder, setSelectedFolder] = useState(0);
+  const [treeReloadKey, setTreeReloadKey] = useState(0);
+  const [filesReloadKey, setFilesReloadKey] = useState(0);
 
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleStatusMsg, setGoogleStatusMsg] = useState("");
@@ -79,12 +83,25 @@ export default function App() {
         ) : null}
 
         <div className="appBody">
-          <aside className="sidebar">
-            <FolderTree selectedId={selectedFolder} onSelect={setSelectedFolder} />
-          </aside>
+        <aside className="sidebar">
+  <QuickActions
+    selectedFolderId={selectedFolder}
+    onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
+    onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
+  />
+
+  <FolderTree
+    selectedId={selectedFolder}
+    onSelect={setSelectedFolder}
+    reloadKey={treeReloadKey}
+  />
+</aside>
 
           <main className="content">
-            <FileList folderId={selectedFolder} onSelectFolder={setSelectedFolder} />
+            <FileList folderId={selectedFolder}
+             onSelectFolder={setSelectedFolder}
+             reloadKey={filesReloadKey}
+             />
           </main>
         </div>
       </div>

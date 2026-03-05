@@ -16,9 +16,11 @@ type ChildFolder = {
   export default function FileList({
     folderId,
     onSelectFolder,
+    reloadKey,
   }: {
     folderId: number;
     onSelectFolder: (id: number) => void;
+    reloadKey: number;
   }) {
   const [files, setFiles] = useState<FileRec[]>([]);
   const [folders, setFolders] = useState<ChildFolder[]>([]);
@@ -60,7 +62,7 @@ type ChildFolder = {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folderId]);
+  }, [folderId, reloadKey]);
 
   useEffect(() => {
     function handleClickOutside() {
@@ -205,9 +207,6 @@ if (!trimmed.toLowerCase().endsWith(".pdf")) {
   return (
     <div>
       <div className="toolbar">
-        <div className="toolbarLeft">
-          <h2 style={{ margin: 0, fontSize: 16 }}>Files</h2>
-        </div>
   
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
