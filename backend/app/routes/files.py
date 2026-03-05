@@ -1,5 +1,6 @@
 import os
 from flask import Blueprint, jsonify, request, send_file, current_app
+from werkzeug.utils import secure_filename
 
 from ..db import db
 from ..models import Folder, File
@@ -30,9 +31,13 @@ def upload_file():
     storage_dir = current_app.config["STORAGE_DIR"]
     full_path, size = save_pdf(f, storage_dir)
 
+    display_name = secure_filename(f.filename or "") or "file.pdf"
+    if not display_name.lower().endswith(".pdf"):
+        display_name = display_name + ".pdf"
+
     rec = File(
         folder_id=folder_id,
-        name=f.filename or "file.pdf",
+        name=display_name,
         storage_path=full_path,
         size=size,
         mime_type=f.mimetype or "application/pdf",
@@ -62,6 +67,42 @@ def view_file(file_id: int):
 
 
     return send_file(rec.storage_path, mimetype=rec.mime_type, as_attachment=False, download_name=rec.name)
+
+@bp.patch("/files/<int:file_id>")
+def rename_file(file_id: int):
+    rec = File.query.get(file_id)
+    if not rec:
+        return jsonify(error="file not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    raw_name = (data.get("name") or "").strip()
+    if not raw_name:
+        return jsonify(error="name is required"), 400
+
+    # sanitize display name (this does NOT rename the disk file)
+    name = secure_filename(raw_name)
+    if not name:
+        return jsonify(error="invalid name"), 400
+
+    # enforce .pdf for consistency
+    if not name.lower().endswith(".pdf"):
+        return jsonify(error="only .pdf names are allowed"), 400
+
+    if len(name) > 255:
+        return jsonify(error="name is too long"), 400
+
+    # avoid duplicates inside the same folder
+    exists = (
+        File.query
+        .filter(File.folder_id == rec.folder_id, File.name == name, File.id != rec.id)
+        .first()
+    )
+    if exists:
+        return jsonify(error="file with this name already exists in this folder"), 409
+
+    rec.name = name
+    db.session.commit()
+    return jsonify(rec.to_dict()), 200    
 
 @bp.delete("/files/<int:file_id>")
 def delete_file(file_id: int):

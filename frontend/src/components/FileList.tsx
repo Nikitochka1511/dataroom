@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listFiles, listChildFolders, uploadFile, deleteFile, listDriveFiles, importDriveFile, type DriveFile } from "../api";
+import { API_BASE, listFiles, listChildFolders, uploadFile, deleteFile, listDriveFiles, importDriveFile, type DriveFile, renameFile } from "../api";
 
 type FileRec = {
   id: number;
@@ -28,6 +28,7 @@ type ChildFolder = {
   const [driveFiles, setDriveFiles] = useState<DriveFile[]>([]);
   const [driveLoading, setDriveLoading] = useState(false);
   const [driveError, setDriveError] = useState("");
+  const [menuFileId, setMenuFileId] = useState<number | null>(null);
 
   async function load() {
     if (!folderId || folderId === 0) {
@@ -61,6 +62,18 @@ type ChildFolder = {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderId]);
 
+  useEffect(() => {
+    function handleClickOutside() {
+      setMenuFileId(null);
+    }
+  
+    window.addEventListener("click", handleClickOutside);
+  
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -84,6 +97,7 @@ type ChildFolder = {
       setLoading(true);
       await uploadFile(f, folderId);
       await load();
+      setMenuFileId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -101,12 +115,42 @@ type ChildFolder = {
       setLoading(true);
       await deleteFile(file.id);
       await load();
+      setMenuFileId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   }
+
+  async function handleRename(file: FileRec) {
+    const newName = window.prompt("Rename file:", file.name);
+    if (!newName) return;
+  
+    let trimmed = newName.trim();
+if (!trimmed) return;
+
+if (!trimmed.toLowerCase().endsWith(".pdf")) {
+  trimmed = `${trimmed}.pdf`;
+}
+  
+    try {
+      setError("");
+      setLoading(true);
+      await renameFile(file.id, trimmed);
+      await load();
+      setMenuFileId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+    function handleView(file: FileRec) {
+        window.open(`${API_BASE}/files/${file.id}/view`, "_blank");
+        setMenuFileId(null);
+      }
 
   function closeDriveModal() {
     setShowDrive(false);
@@ -149,6 +193,7 @@ type ChildFolder = {
       setLoading(true);
       await importDriveFile(driveFile.id, folderId);
       await load();
+      setMenuFileId(null);
       closeDriveModal();
     } catch (err) {
       setDriveError(err instanceof Error ? err.message : String(err));
@@ -162,11 +207,8 @@ type ChildFolder = {
       <div className="toolbar">
         <div className="toolbarLeft">
           <h2 style={{ margin: 0, fontSize: 16 }}>Files</h2>
-          <button className="btn" onClick={load} disabled={loading}>
-            Refresh
-          </button>
         </div>
-
+  
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             className="btn"
@@ -177,7 +219,7 @@ type ChildFolder = {
             <span style={{ marginRight: 8 }}>🟢</span>
             Import from Drive
           </button>
-
+  
           <input
             type="file"
             accept="application/pdf"
@@ -186,75 +228,142 @@ type ChildFolder = {
           />
         </div>
       </div>
-
+  
       {!folderId || folderId === 0 ? (
         <div className="muted" style={{ marginTop: 10 }}>
           Select a folder to view and upload files.
         </div>
       ) : null}
-
+  
       {error ? (
-        <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: "rgba(255, 80, 80, 0.12)" }}>
+        <div
+          style={{
+            marginTop: 10,
+            padding: 10,
+            borderRadius: 10,
+            background: "rgba(255, 80, 80, 0.12)",
+          }}
+        >
           <div style={{ fontSize: 13 }}>Error: {error}</div>
         </div>
       ) : null}
-
-        <div className="table" style={{ marginBottom: 12 }}>
-        <div className="tableHeader" style={{ gridTemplateColumns: "1fr" }}>
-            <div>Folders</div>
-        </div>
-
-        {folders.length === 0 ? (
-            <div style={{ padding: 12 }} className="muted">
-            No folders in this folder.
-            </div>
-        ) : (
-            folders.map((fo) => (
-            <div
-                key={fo.id}
-                className="folderRow"
-                onClick={() => onSelectFolder(fo.id)}
-                title="Open folder"
-            >
-                <span className="folderIcon">📁</span>
-                <div className="fileName">{fo.name}</div>
-            </div>
-            ))
-        )}
-        </div>
-
-      <div className="table">
-        <div className="tableHeader">
-          <div>Files</div>
+  
+      {/* ONE combined box: folders + files (like Explorer) */}
+      <div className="table" style={{ marginTop: 12 }}>
+        <div
+          className="tableHeader"
+          style={{ gridTemplateColumns: "36px 1fr 120px 140px" }}
+        >
+          <div></div>
+          <div>Name</div>
           <div>Size</div>
           <div style={{ textAlign: "right" }}>Action</div>
         </div>
-
-        {files.length === 0 ? (
+  
+        {/* Empty state */}
+        {(!folderId || folderId === 0) ? (
           <div style={{ padding: 12 }} className="muted">
-            {folderId && folderId !== 0 ? (loading ? "Loading..." : "No files in this folder.") : "—"}
+            —
+          </div>
+        ) : folders.length === 0 && files.length === 0 ? (
+          <div style={{ padding: 12 }} className="muted">
+            {loading ? "Loading..." : "This folder is empty."}
           </div>
         ) : (
-          files.map((f) => (
-            <div className="tableRow" key={f.id}>
-              <div className="fileName">
-                <a className="fileLink" href={`http://127.0.0.1:5000/files/${f.id}/view`} target="_blank" rel="noreferrer">
-                  {f.name}
-                </a>
+          <>
+            {/* Folders first */}
+            {folders.map((fo) => (
+              <div
+                key={`folder-${fo.id}`}
+                className="tableRow"
+                style={{
+                  gridTemplateColumns: "36px 1fr 120px 140px",
+                  cursor: "pointer",
+                }}
+                onClick={() => onSelectFolder(fo.id)}
+                title="Open folder"
+              >
+                <div style={{ opacity: 0.9 }}>📁</div>
+                <div className="fileName">{fo.name}</div>
+                <div className="muted">—</div>
+                <div style={{ textAlign: "right" }} />
               </div>
-
-              <div className="muted">{(f.size / 1024).toFixed(1)} KB</div>
-
-              <div style={{ textAlign: "right" }}>
-                <button className="btn btnDanger" onClick={() => handleDelete(f)} disabled={loading}>
-                  Delete
-                </button>
+            ))}
+  
+            {/* Files next */}
+            {files.map((f) => (
+              <div
+                className="tableRow"
+                key={`file-${f.id}`}
+                style={{ gridTemplateColumns: "36px 1fr 120px 140px" }}
+              >
+                <div style={{ opacity: 0.9 }}>📄</div>
+  
+                <div className="fileName">
+                  <a
+                    className="fileLink"
+                    href={`${API_BASE}/files/${f.id}/view`}     
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {f.name}
+                  </a>
+                </div>
+  
+                <div className="muted">{(f.size / 1024).toFixed(1)} KB</div>
+  
+                <div style={{ textAlign: "right", position: "relative" }}>
+                  <button
+                    className="btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuFileId(menuFileId === f.id ? null : f.id);
+                    }}
+                  >
+                    ⋯
+                  </button>
+  
+                  {menuFileId === f.id && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        top: 32,
+                        background: "#1e2430",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: 8,
+                        padding: 6,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        zIndex: 10,
+                      }}
+                    >
+                      <button className="btn" onClick={() => handleView(f)}>
+                        View
+                      </button>
+  
+                      <button className="btn" onClick={() => handleRename(f)}>
+                        Rename
+                      </button>
+  
+                      <button
+                        className="btn btnDanger"
+                        onClick={() => handleDelete(f)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </>
         )}
       </div>
-
+  
+      {/* Drive modal оставляем как было */}
       {showDrive ? (
         <div
           onClick={closeDriveModal}
@@ -281,35 +390,68 @@ type ChildFolder = {
               padding: 14,
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>Import from Google Drive</div>
-              <button className="btn" onClick={closeDriveModal}>Close</button>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 700 }}>
+                Import from Google Drive
+              </div>
+              <button className="btn" onClick={closeDriveModal}>
+                Close
+              </button>
             </div>
-
+  
             {driveError ? (
-              <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: "rgba(255, 80, 80, 0.12)" }}>
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: 10,
+                  borderRadius: 10,
+                  background: "rgba(255, 80, 80, 0.12)",
+                }}
+              >
                 <div style={{ fontSize: 13 }}>Error: {driveError}</div>
               </div>
             ) : null}
-
+  
             <div style={{ marginTop: 12 }} className="table">
-              <div className="tableHeader" style={{ gridTemplateColumns: "1fr 120px 140px" }}>
+              <div
+                className="tableHeader"
+                style={{ gridTemplateColumns: "1fr 120px 140px" }}
+              >
                 <div>Name</div>
                 <div>Size</div>
                 <div style={{ textAlign: "right" }}>Action</div>
               </div>
-
+  
               {driveLoading ? (
-                <div style={{ padding: 12 }} className="muted">Loading Drive files...</div>
+                <div style={{ padding: 12 }} className="muted">
+                  Loading Drive files...
+                </div>
               ) : driveFiles.length === 0 ? (
-                <div style={{ padding: 12 }} className="muted">No PDF files found in Drive.</div>
+                <div style={{ padding: 12 }} className="muted">
+                  No PDF files found in Drive.
+                </div>
               ) : (
                 driveFiles.map((df) => {
-                  const sizeKb = df.size ? (Number(df.size) / 1024).toFixed(1) : "—";
+                  const sizeKb = df.size
+                    ? (Number(df.size) / 1024).toFixed(1)
+                    : "—";
                   return (
-                    <div className="tableRow" key={df.id} style={{ gridTemplateColumns: "1fr 120px 140px" }}>
+                    <div
+                      className="tableRow"
+                      key={df.id}
+                      style={{ gridTemplateColumns: "1fr 120px 140px" }}
+                    >
                       <div className="fileName">{df.name}</div>
-                      <div className="muted">{sizeKb === "—" ? "—" : `${sizeKb} KB`}</div>
+                      <div className="muted">
+                        {sizeKb === "—" ? "—" : `${sizeKb} KB`}
+                      </div>
                       <div style={{ textAlign: "right" }}>
                         <button
                           className="btn"
@@ -327,7 +469,6 @@ type ChildFolder = {
           </div>
         </div>
       ) : null}
-
     </div>
   );
 }

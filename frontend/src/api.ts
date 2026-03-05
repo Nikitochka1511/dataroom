@@ -6,6 +6,7 @@ export type FolderNode = {
   };
   
   const API_BASE = "http://127.0.0.1:5000";
+  export { API_BASE };
   
   export async function fetchFolderTree(): Promise<FolderNode[]> {
     const r = await fetch(`${API_BASE}/folders/tree`);
@@ -28,6 +29,23 @@ export type FolderNode = {
     if (!r.ok) throw new Error(`Failed to create folder: ${r.status}`);
   }
 
+  export async function renameFolder(folderId: number, name: string): Promise<void> {
+    const r = await fetch(`${API_BASE}/folders/${folderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  
+    if (!r.ok) {
+      let msg = `Failed to rename folder: ${r.status}`;
+      try {
+        const data = await r.json();
+        if (data?.error) msg = data.error;
+      } catch {}
+      throw new Error(msg);
+    }
+  }
+
   export async function deleteFolder(folderId: number): Promise<void> {
     const res = await fetch(`${API_BASE}/folders/${folderId}`, {
       method: "DELETE",
@@ -48,7 +66,7 @@ export type FolderNode = {
     form.append("file", file);
     form.append("folder_id", String(folderId));
   
-    const r = await fetch("http://127.0.0.1:5000/files/upload", {
+    const r = await fetch(`${API_BASE}/files/upload`, {
       method: "POST",
       body: form,
     });
@@ -78,12 +96,29 @@ export type FolderNode = {
   }
 
   export async function deleteFile(fileId: number): Promise<void> {
-    const r = await fetch(`http://127.0.0.1:5000/files/${fileId}`, {
+    const r = await fetch(`${API_BASE}/files/${fileId}`, {
       method: "DELETE",
     });
     if (!r.ok) {
       const t = await r.text();
       throw new Error(t);
+    }
+  }
+
+  export async function renameFile(fileId: number, name: string): Promise<void> {
+    const r = await fetch(`${API_BASE}/files/${fileId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  
+    if (!r.ok) {
+      let msg = `Failed to rename file: ${r.status}`;
+      try {
+        const data = await r.json();
+        if (data?.error) msg = data.error;
+      } catch {}
+      throw new Error(msg);
     }
   }
 

@@ -3,46 +3,57 @@
   box-sizing: border-box;
 }
 
+/* Full-screen base */
+html, body, #root {
+  height: 100%;
+}
+
 #root {
-  min-height: 100vh;
+  width: 100%;
 }
 
-/* App shell */
+/* Page */
 .appPage {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 24px;
+  min-height: 100%;
+  background: #151515;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
+/* Main shell takes whole viewport width */
 .appShell {
-  width: min(1200px, 100%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
+  width: 100%;
+  min-height: calc(100vh - 32px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
   overflow: hidden;
 }
 
+/* Header */
 .appHeader {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .appTitle {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
 }
 
+/* Body layout like Explorer */
 .appBody {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  min-height: 560px;
+  grid-template-columns: 320px 1fr; /* left tree, right contents */
+  min-height: calc(100vh - 32px - 56px);
 }
 
 .sidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid rgba(255,255,255,0.08);
   padding: 12px;
   overflow: auto;
 }
@@ -89,7 +100,7 @@
   margin-top: 12px;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .tableHeader,

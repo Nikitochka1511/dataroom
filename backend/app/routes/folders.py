@@ -20,10 +20,58 @@ def create_folder():
         if not parent:
             return jsonify(error="parent folder not found"), 404
 
+                # Prevent duplicates within the same parent (including root where parent_id is None)
+    q = Folder.query.filter(Folder.name == name)
+    if parent_id is None:
+        q = q.filter(Folder.parent_id.is_(None))
+    else:
+        q = q.filter(Folder.parent_id == parent_id)
+
+    if q.first():
+        return jsonify(error="folder with this name already exists in this location"), 409
+
+    if len(name) > 255:
+        return jsonify(error="name is too long"), 400
+
+    if "/" in name or "\\" in name:
+        return jsonify(error="invalid folder name"), 400
+
     folder = Folder(name=name, parent_id=parent_id)
     db.session.add(folder)
     db.session.commit()
     return jsonify(folder.to_dict()), 201
+
+
+@bp.patch("/folders/<int:folder_id>")
+def rename_folder(folder_id: int):
+    folder = Folder.query.get(folder_id)
+    if not folder:
+        return jsonify(error="folder not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify(error="name is required"), 400
+
+    if len(name) > 255:
+        return jsonify(error="name is too long"), 400
+
+    if "/" in name or "\\" in name:
+        return jsonify(error="invalid folder name"), 400
+
+    # Prevent duplicates within the same parent
+    q = Folder.query.filter(Folder.name == name, Folder.id != folder.id)
+    if folder.parent_id is None:
+        q = q.filter(Folder.parent_id.is_(None))
+    else:
+        q = q.filter(Folder.parent_id == folder.parent_id)
+
+    if q.first():
+        return jsonify(error="folder with this name already exists in this location"), 409
+
+    folder.name = name
+    db.session.commit()
+    return jsonify(folder.to_dict()), 200
 
 @bp.get("/folders/tree")
 def folders_tree():
