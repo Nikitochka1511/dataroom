@@ -58,7 +58,7 @@ export default function App() {
     <div className="appPage">
       <div className="appShell">
         <div className="appHeader">
-          <div className="appTitle">DataRoom</div>
+          <div className="appTitle">Harvey: Data Room</div>
 
           <div className="appHeaderRight">
             {googleConnected ? (

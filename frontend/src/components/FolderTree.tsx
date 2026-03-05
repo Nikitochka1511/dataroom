@@ -9,8 +9,9 @@ function FolderItem({
     onRename,
     onCreateSubfolder,
     selectedId,
-    menuFolderId,
-    setMenuFolderId,
+    onToggle,
+    isExpanded,
+    onContext,
   }: {
     node: FolderNode;
     level: number;
@@ -19,120 +20,80 @@ function FolderItem({
     onRename: (node: FolderNode) => void;
     onCreateSubfolder: (node: FolderNode) => void;
     selectedId: number;
-    menuFolderId: number | null;
-    setMenuFolderId: (id: number | null) => void;
+    onToggle: (id: number) => void;
+    isExpanded: (id: number) => boolean;
+    onContext: (id: number, x: number, y: number) => void;
   }) {  
     
     
     const isSelected = node.id === selectedId;
 
-return (
-  <div style={{ marginLeft: level * 16, padding: "4px 0" }}>
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      <div style={{ opacity: 0.9 }}>📁</div>
-
-      <div
-        onClick={() => onSelect(node.id)}
-        style={{
-          cursor: "pointer",
-          fontWeight: isSelected ? 700 : 400,
-          textDecoration: isSelected ? "underline" : "none",
-          flex: 1,
-          userSelect: "none",
-        }}
-        title="Open folder"
-      >
-        {node.name}
-      </div>
-
-      <div style={{ position: "relative" }}>
-      <button
-  data-folder-menu-btn="1"
-  onClick={(e) => {
-    e.stopPropagation();
-    setMenuFolderId(menuFolderId === node.id ? null : node.id);
-  }}
-  title="Actions"
-  style={{ cursor: "pointer" }}
->
-  ⋯
-</button>
-
-        {menuFolderId === node.id && (
-          <div
-          data-folder-menu="1"
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
+    const hasChildren = (node.children?.length ?? 0) > 0;
+    const expanded = isExpanded(node.id);
+    
+    return (
+      <div style={{ marginLeft: level * 16, padding: "4px 0" }}>
+        <div
           style={{
-              position: "absolute",
-              right: 0,
-              top: 28,
-              background: "#1e2430",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 8,
-              padding: 6,
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              zIndex: 50,
-              pointerEvents: "auto",
-                            minWidth: 160,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            userSelect: "none",
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onContext(node.id, e.clientX, e.clientY);
+          }}
+        >
+          {/* caret */}
+          <div
+            style={{ width: 16, cursor: hasChildren ? "pointer" : "default", opacity: hasChildren ? 1 : 0.3 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (hasChildren) onToggle(node.id);
             }}
+            title={hasChildren ? (expanded ? "Collapse" : "Expand") : ""}
           >
-            <button
-              onClick={() => onSelect(node.id)}
-              style={{ cursor: "pointer" }}
-            >
-              Open
-            </button>
-
-            <button
-              onClick={() => onRename(node)}
-              style={{ cursor: "pointer" }}
-            >
-              Rename
-            </button>
-
-            <button
-              onClick={() => onCreateSubfolder(node)}
-              style={{ cursor: "pointer" }}
-            >
-              Create subfolder
-            </button>
-
-            <button
-              onClick={() => onDelete(node.id, node.parent_id ?? null)}
-              style={{ cursor: "pointer" }}
-            >
-              Delete
-            </button>
+            {hasChildren ? (expanded ? "▾" : "▸") : "·"}
           </div>
-        )}
+    
+          <div style={{ opacity: 0.9 }}>📁</div>
+    
+          <div
+            onClick={() => onSelect(node.id)}
+            style={{
+              cursor: "pointer",
+              fontWeight: isSelected ? 700 : 400,
+              textDecoration: isSelected ? "underline" : "none",
+              flex: 1,
+            }}
+            title="Open folder"
+          >
+            {node.name}
+          </div>
+        </div>
+    
+        {/* children */}
+        {expanded
+          ? node.children.map((c) => (
+              <FolderItem
+                key={c.id}
+                node={c}
+                level={level + 1}
+                onSelect={onSelect}
+                onDelete={onDelete}
+                onRename={onRename}
+                onCreateSubfolder={onCreateSubfolder}
+                selectedId={selectedId}
+                onToggle={onToggle}
+                isExpanded={isExpanded}
+                onContext={onContext}
+              />
+            ))
+          : null}
       </div>
-    </div>
-
-    {node.children.map((c) => (
-      <FolderItem
-        key={c.id}
-        node={c}
-        level={level + 1}
-        onSelect={onSelect}
-        onDelete={onDelete}
-        onRename={onRename}
-        onCreateSubfolder={onCreateSubfolder}
-        selectedId={selectedId}
-        menuFolderId={menuFolderId}
-        setMenuFolderId={setMenuFolderId}
-      />
-    ))}
-  </div>
-);
+    );
 }
 
 
@@ -156,7 +117,21 @@ return (
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [newName, setNewName] = useState("");
-  const [menuFolderId, setMenuFolderId] = useState<number | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{ id: number; x: number; y: number } | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set([0]));
+
+  function isExpanded(id: number) {
+    return expandedIds.has(id);
+  }
+  
+  function toggleExpanded(id: number) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   async function load() {
     try {
@@ -247,25 +222,29 @@ return (
   }, []);
  
   useEffect(() => {
-    function handleDocClick(e: MouseEvent) {
-      const target = e.target;
-  
-      if (!(target instanceof Element)) return;
-  
-      // якщо клік по меню або по кнопці ⋯ — не закриваємо
-      if (target.closest('[data-folder-menu="1"]')) return;
-      if (target.closest('[data-folder-menu-btn="1"]')) return;
-  
-      setMenuFolderId(null);
+    function closeMenu() {
+      setCtxMenu(null);
     }
   
-    document.addEventListener("click", handleDocClick);
-    return () => document.removeEventListener("click", handleDocClick);
-  }, []);
+    document.addEventListener("click", closeMenu);
+    window.addEventListener("blur", closeMenu);
+  
+    return () => {
+      document.removeEventListener("click", closeMenu);
+      window.removeEventListener("blur", closeMenu);
+    };
+  }, []);       
   
 
   if (loading) return <div>Loading folders...</div>;
   if (err) return <div style={{ color: "red" }}>Error: {err}</div>;
+
+  const rootNode: FolderNode = {
+    id: 0,
+    name: "Root",
+    parent_id: null,
+    children: tree,
+  };
 
   return (
     <div>
@@ -278,19 +257,86 @@ return (
       ) : (
         tree.map((n) => (
             <FolderItem
-  key={n.id}
-  node={n}
+  node={rootNode}
   level={0}
   onSelect={onSelect}
   onDelete={handleDelete}
   onRename={handleRenameFolder}
   onCreateSubfolder={handleCreateSubfolder}
   selectedId={selectedId}
-  menuFolderId={menuFolderId}
-  setMenuFolderId={setMenuFolderId}
+  onToggle={toggleExpanded}
+  isExpanded={isExpanded}
+  onContext={(id, x, y) => {
+    setCtxMenu({ id, x, y });
+  }}
 />
           ))
       )}
+
+{ctxMenu ? (
+  <div
+    onClick={(e) => e.stopPropagation()}
+    style={{
+      position: "fixed",
+      left: ctxMenu.x,
+      top: ctxMenu.y,
+      background: "#1e2430",
+      border: "1px solid rgba(255,255,255,0.1)",
+      borderRadius: 10,
+      padding: 8,
+      display: "flex",
+      flexDirection: "column",
+      gap: 6,
+      zIndex: 999999,
+      minWidth: 180,
+    }}
+  >
+    <button
+      className="btn"
+      onClick={() => {
+        onSelect(ctxMenu.id);
+        setCtxMenu(null);
+      }}
+    >
+      Open
+    </button>
+
+    <button
+      className="btn"
+      onClick={async () => {
+        const node = findNode(tree, ctxMenu.id);
+        if (node) await handleRenameFolder(node);
+        setCtxMenu(null);
+      }}
+    >
+      Rename
+    </button>
+
+    <button
+      className="btn"
+      onClick={async () => {
+        const node = findNode(tree, ctxMenu.id);
+        if (node) await handleCreateSubfolder(node);
+        setCtxMenu(null);
+      }}
+    >
+      Create subfolder
+    </button>
+
+    <button
+      className="btn btnDanger"
+      onClick={async () => {
+        const node = findNode(tree, ctxMenu.id);
+        if (node) await handleDelete(node.id, node.parent_id ?? null);
+        setCtxMenu(null);
+      }}
+    >
+      Delete
+    </button>
+  </div>
+) : null}
+
     </div>
+
   );
 }
