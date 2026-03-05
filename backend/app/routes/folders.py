@@ -43,3 +43,17 @@ def delete_folder(folder_id):
         # якщо щось впаде — не залишаємо БД у напів-стані
         db.session.rollback()
         return jsonify(error="failed to delete folder"), 500
+
+@bp.get("/folders/<int:folder_id>/children")
+def list_children(folder_id):
+    # folder_id=0 будемо трактувати як "root": повернути кореневі папки
+    if folder_id == 0:
+        children = Folder.query.filter(Folder.parent_id.is_(None)).all()
+        return jsonify([c.to_dict() for c in children])
+
+    folder = Folder.query.get(folder_id)
+    if not folder:
+        return jsonify(error="folder not found"), 404
+
+    children = Folder.query.filter_by(parent_id=folder_id).all()
+    return jsonify([c.to_dict() for c in children])

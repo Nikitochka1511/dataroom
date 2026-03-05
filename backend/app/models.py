@@ -32,3 +32,16 @@ class File(db.Model):
             "mime_type": self.mime_type,
             "created_at": self.created_at.isoformat() + "Z",
         }
+
+        
+
+class GoogleToken(db.Model):
+    __tablename__ = "google_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    access_token = db.Column(db.Text, nullable=False)
+    refresh_token = db.Column(db.Text, nullable=True)
+    expires_at = db.Column(db.DateTime, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

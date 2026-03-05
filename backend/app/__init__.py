@@ -1,16 +1,20 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+import os
 
 from .db import db
-from .routes.folders import bp as folders_bp
 
+from .routes.folders import bp as folders_bp
 from .routes.files import bp as files_bp
-import os
+from .routes.google_auth import bp as google_auth_bp
+from .routes.drive import bp as drive_bp
 
 def create_app():
     app = Flask(__name__)
-    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))  # -> backend/app/..
-    app.config["STORAGE_DIR"] = os.path.join(BASE_DIR, "storage")             # -> backend/storage
+
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    app.config["STORAGE_DIR"] = os.path.join(BASE_DIR, "storage")
+
     CORS(app)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dataroom.db"
@@ -27,5 +31,6 @@ def create_app():
 
     app.register_blueprint(folders_bp)
     app.register_blueprint(files_bp)
-
+    app.register_blueprint(google_auth_bp)
+    app.register_blueprint(drive_bp)
     return app
