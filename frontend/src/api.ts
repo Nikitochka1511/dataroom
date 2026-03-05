@@ -14,6 +14,20 @@ export type FolderNode = {
     return r.json();
   }
 
+  export async function googleStatus(): Promise<{ connected: boolean }> {
+    const r = await fetch(`${API_BASE}/auth/google/status`);
+    if (!r.ok) throw new Error(`Failed to get google status: ${r.status}`);
+    return r.json();
+  }
+  
+  export async function googleLogout(): Promise<void> {
+    const r = await fetch(`${API_BASE}/auth/google/logout`, { method: "POST" });
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error(t || `Logout failed: ${r.status}`);
+    }
+  }
+
   export async function createFolder(
     name: string,
     parent_id: number | null

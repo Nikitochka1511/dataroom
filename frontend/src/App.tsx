@@ -3,6 +3,8 @@ import FolderTree from "./components/FolderTree";
 import FileList from "./components/FileList";
 import QuickActions from "./components/QuickActions";
 import "./App.css";
+import WelcomeGate from "./components/WelcomeGate";
+import { googleStatus, googleLogout } from "./api";
 
 
 const API_BASE = "http://127.0.0.1:5000";
@@ -28,6 +30,8 @@ export default function App() {
 
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleStatusMsg, setGoogleStatusMsg] = useState("");
+
+  const [appReady, setAppReady] = useState(false);
 
   function connectGoogle() {
     setGoogleStatusMsg("");
@@ -61,49 +65,63 @@ export default function App() {
   return (
     <div className="appPage">
       <div className="appShell">
-        <div className="appHeader">
-          <div className="appTitle">Harvey: Data Room</div>
-
-          <div className="appHeaderRight">
-            {googleConnected ? (
-              <span className="pill pillOk">Drive connected</span>
-            ) : (
-              <span className="pill">Drive not connected</span>
-            )}
-
-            <button className="btn" onClick={connectGoogle}>
-              <span style={{ marginRight: 8 }}>🟢</span>
-              Connect Google Drive
-            </button>
-          </div>
-        </div>
-
-        {googleStatusMsg ? (
-          <div className="topNotice">{googleStatusMsg}</div>
-        ) : null}
-
-        <div className="appBody">
-        <aside className="sidebar">
-  <QuickActions
-    selectedFolderId={selectedFolder}
-    onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
-    onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
-  />
-
-  <FolderTree
-    selectedId={selectedFolder}
-    onSelect={setSelectedFolder}
-    reloadKey={treeReloadKey}
-  />
-</aside>
-
-          <main className="content">
-            <FileList folderId={selectedFolder}
-             onSelectFolder={setSelectedFolder}
-             reloadKey={filesReloadKey}
-             />
-          </main>
-        </div>
+        {!appReady ? (
+          <WelcomeGate
+            onConnected={() => {
+              setAppReady(true);
+            }}
+          />
+        ) : (
+          <>
+            <div className="appHeader">
+              <div className="appTitle">Harvey: Data Room</div>
+  
+              <div className="appHeaderRight">
+                <button
+                  className="btn"
+                  onClick={async () => {
+                    try {
+                      await googleLogout();
+                    } finally {
+                      setAppReady(false);
+                      setGoogleConnected(false);
+                      setGoogleStatusMsg("");
+                    }
+                  }}
+                  title="Sign out from Google Drive"
+                >
+                  ⋯ Sign out
+                </button>
+              </div>
+            </div>
+  
+            {googleStatusMsg ? <div className="topNotice">{googleStatusMsg}</div> : null}
+  
+            <div className="appBody">
+              <aside className="sidebar">
+                <QuickActions
+                  selectedFolderId={selectedFolder}
+                  onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
+                  onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
+                />
+  
+                <FolderTree
+                  selectedId={selectedFolder}
+                  onSelect={setSelectedFolder}
+                  reloadKey={treeReloadKey}
+                />
+              </aside>
+  
+              <main className="content">
+                <FileList
+                  folderId={selectedFolder}
+                  onSelectFolder={setSelectedFolder}
+                  reloadKey={filesReloadKey}
+                />
+              </main>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

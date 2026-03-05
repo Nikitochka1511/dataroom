@@ -1,7 +1,7 @@
 /* Reset-ish */
 * {
   box-sizing: border-box;
-  font-family: "Times New Roman", Times, serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
 /* Full-screen base */
@@ -44,6 +44,7 @@ html, body, #root {
 .appTitle {
   font-size: 20px;
   font-weight: 700;
+  font-family: "Times New Roman", Times, serif;
 }
 
 /* Body layout like Explorer */
@@ -188,5 +189,76 @@ html, body, #root {
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.05);
+  font-size: 13px;
+}
+
+/* Welcome / Auth screen */
+.welcomeWrap {
+  min-height: calc(100vh - 32px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.welcomeCard {
+  width: min(420px, 92vw);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.55),
+    0 1px 0 rgba(255,255,255,0.06) inset;
+  padding: 22px;
+}
+
+.welcomeTitle {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+}
+
+.welcomeSub {
+  text-align: center;
+  opacity: 0.75;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+}
+
+.welcomeBtn {
+  width: 100%;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+
+.welcomeBtn:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.welcomeBtn:active {
+  transform: translateY(1px);
+}
+
+.welcomeSmall {
+  text-align: center;
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 14px;
+  line-height: 1.35;
+}
+
+.welcomeError {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.18);
   font-size: 13px;
 }

@@ -12,12 +12,22 @@ bp = Blueprint("drive", __name__)
 DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files"
 DRIVE_DOWNLOAD_URL = "https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
 
+def _get_access_token_or_401():
+    try:
+        return get_valid_access_token(), None
+    except RuntimeError as e:
+        msg = str(e).lower()
+        if "not connected" in msg or "reconnect" in msg or "missing refresh token" in msg:
+            return None, (jsonify(error="google_not_connected", message=str(e)), 401)
+        return None, (jsonify(error="google_token_error", message=str(e)), 502)
+
 
 @bp.get("/drive/files")
 def drive_list_files():
-    access_token = get_valid_access_token()
+    access_token, err = _get_access_token_or_401()
+    if err:
+        return err
 
-    # беремо тільки PDF
     q = "mimeType='application/pdf' and trashed=false"
     params = {
         "q": q,
@@ -37,7 +47,10 @@ def drive_list_files():
 
 @bp.post("/drive/import")
 def drive_import_file():
-    access_token = get_valid_access_token()
+    access_token, err = _get_access_token_or_401()
+    if err:
+        return err
+
     payload = request.get_json(silent=True) or {}
 
     file_id = payload.get("file_id")

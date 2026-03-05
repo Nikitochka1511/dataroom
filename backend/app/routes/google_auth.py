@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 import requests
 from flask import Blueprint, jsonify, redirect, request
 
+from ..db import db
+from ..models import GoogleToken
+
 bp = Blueprint("google_auth", __name__)
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -75,8 +78,6 @@ def google_callback():
     if not access_token:
         return _popup_close(frontend_origin, ok=False, message="no access_token")
 
-    from ..db import db
-    from ..models import GoogleToken
 
     expires_at = None
     if expires_in:
@@ -122,7 +123,19 @@ def _popup_close(frontend_origin: str, ok: bool, message: str):
 """, 200, {"Content-Type": "text/html"}
 
 
+from ..models import GoogleToken
+
 @bp.get("/auth/google/status")
 def google_status():
-    # Поки що просто заглушка, зберігання зробимо наступним кроком
-    return jsonify(connected=False, note="token storage not implemented yet")
+    tok = GoogleToken.query.first()
+    connected = bool(tok and tok.refresh_token)
+    return jsonify(connected=connected), 200
+
+
+@bp.post("/auth/google/logout")
+def google_logout():
+    tok = GoogleToken.query.first()
+    if tok:
+        db.session.delete(tok)
+        db.session.commit()
+    return jsonify(ok=True), 200
