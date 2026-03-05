@@ -69,6 +69,14 @@ export type FolderNode = {
     return r.json();
   }
 
+  export async function listChildFolders(folderId: number) {
+    const r = await fetch(`${API_BASE}/folders/${folderId}/children`);
+    if (!r.ok) {
+      throw new Error(`Failed to list child folders: ${r.status}`);
+    }
+    return r.json() as Promise<Array<{ id: number; name: string; parent_id: number | null }>>;
+  }
+
   export async function deleteFile(fileId: number): Promise<void> {
     const r = await fetch(`http://127.0.0.1:5000/files/${fileId}`, {
       method: "DELETE",
@@ -76,5 +84,35 @@ export type FolderNode = {
     if (!r.ok) {
       const t = await r.text();
       throw new Error(t);
+    }
+  }
+
+  export type DriveFile = {
+    id: string;
+    name: string;
+    size?: string; 
+    modifiedTime?: string;
+    mimeType?: string;
+  };
+  
+  export async function listDriveFiles(): Promise<DriveFile[]> {
+    const r = await fetch(`${API_BASE}/drive/files`);
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error(t || `Failed to load Drive files: ${r.status}`);
+    }
+    return r.json();
+  }
+  
+  export async function importDriveFile(fileId: string, folderId: number): Promise<void> {
+    const r = await fetch(`${API_BASE}/drive/import`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file_id: fileId, folder_id: folderId }),
+    });
+  
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error(t || `Import failed: ${r.status}`);
     }
   }
