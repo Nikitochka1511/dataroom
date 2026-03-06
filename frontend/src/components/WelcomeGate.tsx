@@ -83,19 +83,22 @@ export default function WelcomeGate({
 
   return (
     <div className="welcomeWrap">
-      <div>
-        <div className="appTitle" style={{ textAlign: "center", marginBottom: 18 }}>
-          Harvey: Data Room
-        </div>
-  
-        <div className="welcomeCard">
-          <h2 className="welcomeTitle">Welcome back</h2>
-          <p className="welcomeSub">Access Data Room with your Google account</p>
-  
-          <button className="welcomeBtn" onClick={connectGoogle}>
-            <span style={{ fontSize: 14, lineHeight: 1 }}>🟢</span>
-            <span style={{ fontWeight: 700 }}>Login with Google</span>
-          </button>
+      <div className="welcomeInner">
+  <div className="welcomeBrand">Harvey: Data Room</div>
+
+  <div className="welcomeCard">
+    <h2 className="welcomeTitle">Welcome back</h2>
+    <p className="welcomeSub">Access Data Room with your Google account</p>
+
+    <button className="welcomeBtn" onClick={connectGoogle}>
+  <img
+    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+    alt="Google"
+    className="googleIcon"
+  />
+
+  <span className="welcomeBtnText">Continue with Google</span>
+</button>
   
           {msg ? (
             <div style={{ marginTop: 12, opacity: 0.85, textAlign: "center" }}>{msg}</div>

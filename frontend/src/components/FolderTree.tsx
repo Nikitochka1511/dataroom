@@ -32,15 +32,13 @@ function FolderItem({
     const expanded = isExpanded(node.id);
     
     return (
-      <div style={{ marginLeft: level * 16, padding: "4px 0" }}>
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            userSelect: "none",
-          }}
-          onContextMenu={(e) => {
+          className="treeNode"
+          style={{ marginLeft: level === 0 ? 0 : 12 }}
+        >
+        <div
+  className={`treeRow ${isSelected ? "treeRowSelected" : ""}`}
+  onContextMenu={(e) => {
             e.preventDefault();
             e.stopPropagation();
             onContext(node.id, e.clientX, e.clientY);
@@ -48,50 +46,47 @@ function FolderItem({
         >
           {/* caret */}
           <div
-            style={{ width: 16, cursor: hasChildren ? "pointer" : "default", opacity: hasChildren ? 1 : 0.3 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (hasChildren) onToggle(node.id);
-            }}
-            title={hasChildren ? (expanded ? "Collapse" : "Expand") : ""}
-          >
-            {hasChildren ? (expanded ? "▾" : "▸") : "·"}
-          </div>
+  className={`treeCaret ${hasChildren ? "treeCaretActive" : "treeCaretEmpty"}`}
+  onClick={(e) => {
+    e.stopPropagation();
+    if (hasChildren) onToggle(node.id);
+  }}
+  title={hasChildren ? (expanded ? "Collapse" : "Expand") : ""}
+>
+  {hasChildren ? (expanded ? "▾" : "▸") : ""}
+</div>
     
-          <div style={{ opacity: 0.9 }}>📁</div>
+<div className="treeFolderIcon">📁</div>
     
-          <div
-            onClick={() => onSelect(node.id)}
-            style={{
-              cursor: "pointer",
-              fontWeight: isSelected ? 700 : 400,
-              textDecoration: isSelected ? "underline" : "none",
-              flex: 1,
-            }}
-            title="Open folder"
-          >
-            {node.name}
-          </div>
+<div
+  onClick={() => onSelect(node.id)}
+  className="treeLabel"
+  title={node.name}
+>
+  {node.name}
+</div>
         </div>
     
         {/* children */}
-        {expanded
-          ? node.children.map((c) => (
-              <FolderItem
-                key={c.id}
-                node={c}
-                level={level + 1}
-                onSelect={onSelect}
-                onDelete={onDelete}
-                onRename={onRename}
-                onCreateSubfolder={onCreateSubfolder}
-                selectedId={selectedId}
-                onToggle={onToggle}
-                isExpanded={isExpanded}
-                onContext={onContext}
-              />
-            ))
-          : null}
+        {expanded ? (
+  <div className="treeChildren">
+    {node.children.map((c) => (
+      <FolderItem
+        key={c.id}
+        node={c}
+        level={level + 1}
+        onSelect={onSelect}
+        onDelete={onDelete}
+        onRename={onRename}
+        onCreateSubfolder={onCreateSubfolder}
+        selectedId={selectedId}
+        onToggle={onToggle}
+        isExpanded={isExpanded}
+        onContext={onContext}
+      />
+    ))}
+  </div>
+) : null}
       </div>
     );
 }

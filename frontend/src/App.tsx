@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import FolderTree from "./components/FolderTree";
 import FileList from "./components/FileList";
-import QuickActions from "./components/QuickActions";
 import "./App.css";
 import WelcomeGate from "./components/WelcomeGate";
 import { googleStatus, googleLogout } from "./api";
@@ -95,15 +94,8 @@ export default function App() {
               </div>
             </div>
   
-            {googleStatusMsg ? <div className="topNotice">{googleStatusMsg}</div> : null}
-  
             <div className="appBody">
               <aside className="sidebar">
-                <QuickActions
-                  selectedFolderId={selectedFolder}
-                  onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
-                  onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
-                />
   
                 <FolderTree
                   selectedId={selectedFolder}
@@ -115,11 +107,13 @@ export default function App() {
               </aside>
   
               <main className="content">
-                <FileList
-                  folderId={selectedFolder}
-                  onSelectFolder={setSelectedFolder}
-                  reloadKey={filesReloadKey}
-                />
+              <FileList
+  folderId={selectedFolder}
+  onSelectFolder={setSelectedFolder}
+  reloadKey={filesReloadKey}
+  onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
+  onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
+/>
               </main>
             </div>
           </>

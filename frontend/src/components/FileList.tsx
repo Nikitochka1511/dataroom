@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { API_BASE, listFiles, listChildFolders, uploadFile, deleteFile, listDriveFiles, importDriveFile, type DriveFile, renameFile } from "../api";
-
+import { useEffect, useState, useRef } from "react";
+import { API_BASE, listFiles, listChildFolders, uploadFile, deleteFile, listDriveFiles, importDriveFile, type DriveFile, renameFile, createFolder } from "../api";
 type FileRec = {
   id: number;
   name: string;
@@ -17,10 +16,14 @@ type ChildFolder = {
     folderId,
     onSelectFolder,
     reloadKey,
+    onTreeChanged,
+    onFilesChanged,
   }: {
     folderId: number;
     onSelectFolder: (id: number) => void;
     reloadKey: number;
+    onTreeChanged: () => void;
+    onFilesChanged: () => void;
   }) {
   const [files, setFiles] = useState<FileRec[]>([]);
   const [folders, setFolders] = useState<ChildFolder[]>([]);
@@ -31,6 +34,7 @@ type ChildFolder = {
   const [driveLoading, setDriveLoading] = useState(false);
   const [driveError, setDriveError] = useState("");
   const [menuFileId, setMenuFileId] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function load() {
     if (!folderId || folderId === 0) {
@@ -105,6 +109,30 @@ type ChildFolder = {
     } finally {
       setLoading(false);
       e.target.value = "";
+    }
+  }
+
+  async function handleNewFolder() {
+    setError("");
+  
+    const nameRaw = window.prompt("New folder name:", "");
+    if (!nameRaw) return;
+  
+    const name = nameRaw.trim();
+    if (!name) return;
+  
+    const parentId = folderId === 0 ? null : folderId;
+  
+    try {
+      setLoading(true);
+      await createFolder(name, parentId);
+      await load();
+      onTreeChanged();
+      onFilesChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -208,23 +236,46 @@ if (!trimmed.toLowerCase().endsWith(".pdf")) {
     <div>
       <div className="toolbar">
   
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            className="btn"
-            onClick={openDriveModal}
-            disabled={!folderId || folderId === 0 || loading}
-            title="Import PDF files from your Google Drive"
-          >
-            <span style={{ marginRight: 8 }}>🟢</span>
-            Import from Drive
-          </button>
-  
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={handleUpload}
-            disabled={!folderId || folderId === 0 || loading}
-          />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+  <button
+    className="btn"
+    onClick={handleNewFolder}
+    disabled={loading}
+    title="Create a new folder"
+  >
+    📁 New Folder
+  </button>
+
+  <button
+    className="btn"
+    onClick={openDriveModal}
+    disabled={!folderId || folderId === 0 || loading}
+    title="Import PDF files from your Google Drive"
+  >
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/d/da/Google_Drive_logo.png"
+      alt="Google Drive"
+      className="driveIcon"
+    />
+    Import from Drive
+  </button>
+
+  <button
+    className="btn"
+    onClick={() => fileInputRef.current?.click()}
+    disabled={!folderId || folderId === 0 || loading}
+  >
+    Upload from Computer
+  </button>
+
+<input
+  ref={fileInputRef}
+  type="file"
+  accept="application/pdf"
+  onChange={handleUpload}
+  disabled={!folderId || folderId === 0 || loading}
+  style={{ display: "none" }}
+/>
         </div>
       </div>
   
@@ -272,22 +323,22 @@ if (!trimmed.toLowerCase().endsWith(".pdf")) {
           <>
             {/* Folders first */}
             {folders.map((fo) => (
-              <div
-                key={`folder-${fo.id}`}
-                className="tableRow"
-                style={{
-                  gridTemplateColumns: "36px 1fr 120px 140px",
-                  cursor: "pointer",
-                }}
-                onClick={() => onSelectFolder(fo.id)}
-                title="Open folder"
-              >
-                <div style={{ opacity: 0.9 }}>📁</div>
-                <div className="fileName">{fo.name}</div>
-                <div className="muted">—</div>
-                <div style={{ textAlign: "right" }} />
-              </div>
-            ))}
+  <div
+    key={`folder-${fo.id}`}
+    className="tableRow tableFolderRow"
+    style={{
+      gridTemplateColumns: "36px 1fr 120px 140px",
+      cursor: "pointer",
+    }}
+    onClick={() => onSelectFolder(fo.id)}
+    title={fo.name}
+  >
+    <div style={{ opacity: 0.9 }}>📁</div>
+    <div className="fileName tableFolderName">{fo.name}</div>
+    <div className="muted">—</div>
+    <div style={{ textAlign: "right" }} />
+  </div>
+))}
   
             {/* Files next */}
             {files.map((f) => (
@@ -299,14 +350,15 @@ if (!trimmed.toLowerCase().endsWith(".pdf")) {
                 <div style={{ opacity: 0.9 }}>📄</div>
   
                 <div className="fileName">
-                  <a
-                    className="fileLink"
-                    href={`${API_BASE}/files/${f.id}/view`}     
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {f.name}
-                  </a>
+                <a
+  className="fileLink"
+  href={`${API_BASE}/files/${f.id}/view`}
+  target="_blank"
+  rel="noreferrer"
+  title={f.name}
+>
+  {f.name}
+</a>
                 </div>
   
                 <div className="muted">{(f.size / 1024).toFixed(1)} KB</div>

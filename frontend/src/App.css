@@ -109,7 +109,7 @@ html, body, #root {
 .tableRow {
   display: grid;
   grid-template-columns: 1fr 110px 90px;
-  gap: 10px;
+  gap: 5px;
   align-items: center;
   padding: 10px 12px;
 }
@@ -142,7 +142,45 @@ html, body, #root {
 .fileLink:hover {
   text-decoration: underline;
 }
+.tableRow {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  transition: background 0.15s ease;
+}
 
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.fileName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableFolderRow:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.tableFolderName {
+  font-weight: 500;
+  color: rgba(255,255,255,0.96);
+}
+
+.fileLink {
+  color: rgba(255,255,255,0.92);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.fileLink:hover {
+  color: #d7e4ff;
+  text-decoration: none;
+}
 .muted {
   opacity: 0.7;
   font-size: 12px;
@@ -198,31 +236,60 @@ html, body, #root {
   display: grid;
   place-items: center;
   padding: 24px;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 22%, transparent 48%),
+    #0f0f10;
+}
+
+.welcomeInner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transform: translateY(-24px);
+}
+
+.welcomeBrand {
+  text-align: center;
+  font-size: 50px;
+  line-height: 1.5;
+  font-weight: 400;
+  font-family: "Times New Roman", Times, serif;
+  color: rgba(255,255,255,0.96);
+  letter-spacing: -0.02em;
 }
 
 .welcomeCard {
-  width: min(420px, 92vw);
+  width: min(450px, 92vw);
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+  background: linear-gradient(
+    180deg,
+    rgba(36, 36, 38, 0.96) 0%,
+    rgba(28, 28, 30, 0.96) 100%
+  );
   box-shadow:
-    0 30px 80px rgba(0,0,0,0.55),
-    0 1px 0 rgba(255,255,255,0.06) inset;
-  padding: 22px;
+    0 30px 80px rgba(0,0,0,0.58),
+    0 0 0 1px rgba(255,255,255,0.03) inset;
+  padding: 28px 22px 20px;
 }
 
 .welcomeTitle {
   text-align: center;
-  font-size: 22px;
+  font-size: 24px;
+  line-height: 1.15;
   font-weight: 800;
   margin: 0 0 10px 0;
+  color: rgba(255,255,255,0.97);
 }
 
 .welcomeSub {
   text-align: center;
-  opacity: 0.75;
-  font-size: 13px;
-  margin: 0 0 16px 0;
+  opacity: 0.72;
+  font-size: 15px;
+  margin: 0 0 18px 0;
+  color: rgba(255,255,255,0.82);
 }
 
 .welcomeBtn {
@@ -230,35 +297,132 @@ html, body, #root {
   justify-content: center;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
   cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease, border-color 0.18s ease;
 }
 
 .welcomeBtn:hover {
   background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.20);
 }
 
 .welcomeBtn:active {
   transform: translateY(1px);
 }
 
+.welcomeBtnDot {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #8df0b3 0%, #64d98d 55%, #3bb96a 100%);
+  box-shadow: 0 0 12px rgba(98, 222, 146, 0.35);
+  flex: 0 0 auto;
+}
+
+.welcomeBtnText {
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1;
+}
+
 .welcomeSmall {
   text-align: center;
-  font-size: 11px;
-  opacity: 0.55;
-  margin-top: 14px;
-  line-height: 1.35;
+  font-size: 12px;
+  opacity: 0.5;
+  margin-top: 16px;
+  line-height: 1.45;
 }
 
 .welcomeError {
-  margin-top: 12px;
-  padding: 10px;
+  margin-top: 14px;
+  padding: 12px;
   border-radius: 12px;
   background: rgba(255, 80, 80, 0.12);
   border: 1px solid rgba(255, 80, 80, 0.18);
   font-size: 13px;
+}
+
+.googleIcon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Folder tree */
+.treeNode {
+  position: relative;
+}
+
+.treeChildren {
+  margin-left: 5px;
+  padding-left: 3px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.treeRow {
+  min-width: 0;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px;
+  border-radius: 8px;
+  user-select: none;
+  cursor: default;
+  transition: background 0.15s ease;
+}
+
+.treeRow:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.treeRowSelected {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.treeCaret {
+  width: 18px;
+  flex: 0 0 18px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.treeCaretActive {
+  cursor: pointer;
+}
+
+.treeCaretEmpty {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.treeFolderIcon {
+  width: 16px;
+  flex: 0 0 16px;
+  opacity: 0.95;
+}
+
+.treeLabel {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.driveIcon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  object-fit: contain;
 }
