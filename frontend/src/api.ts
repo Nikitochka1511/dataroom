@@ -10,10 +10,29 @@ export type FolderNode = {
     name: string;
     parent_id: number | null;
   };
+
+  export type SearchItem = {
+    id: number;
+    type: "file" | "folder";
+    name: string;
+    folder_id: number | null;
+    path: string;
+  };
   
   const API_BASE = "http://127.0.0.1:5000";
   export { API_BASE };
   
+  export async function searchItems(query: string): Promise<SearchItem[]> {
+    const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
+  
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Failed to search items");
+    }
+  
+    return res.json();
+  }
+
   export async function fetchFolderTree(): Promise<FolderNode[]> {
     const r = await fetch(`${API_BASE}/folders/tree`);
     if (!r.ok) throw new Error(`Failed to load tree: ${r.status}`);

@@ -6,7 +6,25 @@ from ..db import db
 from ..models import Folder, File
 from ..services.file_storage import validate_pdf, save_pdf
 
+from flask import request, jsonify
+from sqlalchemy import or_
+
 bp = Blueprint("files", __name__)
+
+
+def build_folder_path(folder):
+    parts = []
+    current = folder
+
+    while current is not None:
+        parts.append(current.name)
+
+        if current.parent_id is None:
+            break
+
+        current = Folder.query.get(current.parent_id)
+
+    return "Root / " + " / ".join(reversed(parts))
 
 def _unique_file_name(base_name: str, folder_id: int, exclude_id: int | None = None) -> str:
     if "." in base_name:
@@ -29,7 +47,60 @@ def _unique_file_name(base_name: str, folder_id: int, exclude_id: int | None = N
 
         candidate = f"{stem} ({i}){ext}"
         i += 1
+@bp.get("/search")
+def search_items():
+    q = (request.args.get("q") or "").strip()
 
+    if not q:
+        return jsonify([])
+
+    folder_matches = (
+        Folder.query
+        .filter(Folder.name.ilike(f"%{q}%"))
+        .order_by(Folder.name.asc())
+        .limit(20)
+        .all()
+    )
+
+    file_matches = (
+        File.query
+        .filter(File.name.ilike(f"%{q}%"))
+        .order_by(File.name.asc())
+        .limit(20)
+        .all()
+    )
+
+    results = []
+
+    for folder in folder_matches:
+        folder_path = build_folder_path(folder)
+
+        results.append({
+            "id": folder.id,
+            "type": "folder",
+            "name": folder.name,
+            "folder_id": folder.id,
+            "path": folder_path,
+        })
+
+    for file in file_matches:
+        folder_path = "Root"
+
+        parent_folder = Folder.query.get(file.folder_id)
+        if parent_folder is not None:
+            folder_path = build_folder_path(parent_folder)
+
+        results.append({
+            "id": file.id,
+            "type": "file",
+            "name": file.name,
+            "folder_id": file.folder_id,
+            "path": f"{folder_path} / {file.name}",
+        })
+
+    return jsonify(results)
+
+    
 @bp.post("/files/upload")
 def upload_file():
     # multipart/form-data: file + folder_id

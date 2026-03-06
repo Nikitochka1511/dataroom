@@ -4,6 +4,7 @@ import FileList from "./components/FileList";
 import "./App.css";
 import WelcomeGate from "./components/WelcomeGate";
 import { googleStatus, googleLogout, listFolderPath, type FolderPathItem } from "./api";
+import SearchModal from "./components/SearchModal";
 
 const API_BASE = "http://127.0.0.1:5000";
 
@@ -31,6 +32,8 @@ export default function App() {
 
   const [appReady, setAppReady] = useState(false);
   const [folderPath, setFolderPath] = useState<FolderPathItem[]>([]);
+
+  const [showSearch, setShowSearch] = useState(false);
 
   function connectGoogle() {
     setGoogleStatusMsg("");
@@ -127,6 +130,17 @@ export default function App() {
   </div>
 
   <div className="appHeaderRight">
+
+
+  <button
+  className="btn"
+  onClick={() => setShowSearch(true)}
+  title="Search files and folders"
+  style={{ minWidth: 140 }}
+>
+  Search...
+</button>
+
                 <button
                   className="btn"
                   onClick={async () => {
@@ -147,7 +161,6 @@ export default function App() {
   
             <div className="appBody">
               <aside className="sidebar">
-  
                 <FolderTree
                   selectedId={selectedFolder}
                   onSelect={setSelectedFolder}
@@ -156,18 +169,26 @@ export default function App() {
                   onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
                 />
               </aside>
-  
+
               <main className="content">
-              <FileList
-  folderId={selectedFolder}
-  onSelectFolder={setSelectedFolder}
-  reloadKey={filesReloadKey}
-  onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
-  onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
-/>
+                <FileList
+                  folderId={selectedFolder}
+                  onSelectFolder={setSelectedFolder}
+                  reloadKey={filesReloadKey}
+                  onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
+                  onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
+                />
               </main>
             </div>
+
+            <SearchModal
+              open={showSearch}
+              onClose={() => setShowSearch(false)}
+              onSelectFolder={setSelectedFolder}
+            />
           </>
+
+          
         )}
       </div>
     </div>
