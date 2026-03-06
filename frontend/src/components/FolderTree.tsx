@@ -202,7 +202,7 @@ function FolderItem({
     try {
       await renameFolder(node.id, name);
       await load();
-      setMenuFolderId(null);
+      setCtxMenu(null);
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
     }
@@ -218,7 +218,7 @@ function FolderItem({
     try {
       await createFolder(name, parent.id);
       await load();
-      setMenuFolderId(null);
+      setCtxMenu(null);
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
     }
@@ -261,25 +261,23 @@ function FolderItem({
       </div>
   
       {tree.length === 0 ? (
-        <div>No folders yet.</div>
-      ) : (
-        tree.map((n) => (
-            <FolderItem
-  node={rootNode}
-  level={0}
-  onSelect={onSelect}
-  onDelete={handleDelete}
-  onRename={handleRenameFolder}
-  onCreateSubfolder={handleCreateSubfolder}
-  selectedId={selectedId}
-  onToggle={toggleExpanded}
-  isExpanded={isExpanded}
-  onContext={(id, x, y) => {
-    setCtxMenu({ id, x, y });
-  }}
-/>
-          ))
-      )}
+  <div>No folders yet.</div>
+) : (
+  <FolderItem
+    node={rootNode}
+    level={0}
+    onSelect={onSelect}
+    onDelete={handleDelete}
+    onRename={handleRenameFolder}
+    onCreateSubfolder={handleCreateSubfolder}
+    selectedId={selectedId}
+    onToggle={toggleExpanded}
+    isExpanded={isExpanded}
+    onContext={(id, x, y) => {
+      setCtxMenu({ id, x, y });
+    }}
+  />
+)}
 
 {ctxMenu ? (
   <div

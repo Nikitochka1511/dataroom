@@ -6,6 +6,34 @@ from ..services.folder_delete import delete_folder_cascade
 
 bp = Blueprint("folders", __name__)
 
+def _unique_folder_name(base_name: str, parent_id: int | None, exclude_id: int | None = None) -> str:
+    candidate = base_name
+    i = 1
+
+    while True:
+        q = Folder.query.filter(Folder.parent_id == parent_id, Folder.name == candidate)
+        if parent_id is None:
+            q = Folder.query.filter(Folder.parent_id.is_(None), Folder.name == candidate)
+
+        if exclude_id is not None:
+            q = q.filter(Folder.id != exclude_id)
+
+        exists = q.first()
+        if not exists:
+            return candidate
+
+        candidate = f"{base_name} ({i})"
+        i += 1
+
+import os
+from flask import Blueprint, jsonify, request, send_file, current_app
+from werkzeug.utils import secure_filename
+
+from ..db import db
+from ..models import Folder, File
+from ..services.file_storage import validate_pdf, save_pdf
+
+
 @bp.post("/folders")
 def create_folder():
     data = request.get_json(silent=True) or {}
@@ -21,14 +49,7 @@ def create_folder():
             return jsonify(error="parent folder not found"), 404
 
                 # Prevent duplicates within the same parent (including root where parent_id is None)
-    q = Folder.query.filter(Folder.name == name)
-    if parent_id is None:
-        q = q.filter(Folder.parent_id.is_(None))
-    else:
-        q = q.filter(Folder.parent_id == parent_id)
-
-    if q.first():
-        return jsonify(error="folder with this name already exists in this location"), 409
+    name = _unique_folder_name(name, parent_id)
 
     if len(name) > 255:
         return jsonify(error="name is too long"), 400
@@ -59,15 +80,7 @@ def rename_folder(folder_id: int):
     if "/" in name or "\\" in name:
         return jsonify(error="invalid folder name"), 400
 
-    # Prevent duplicates within the same parent
-    q = Folder.query.filter(Folder.name == name, Folder.id != folder.id)
-    if folder.parent_id is None:
-        q = q.filter(Folder.parent_id.is_(None))
-    else:
-        q = q.filter(Folder.parent_id == folder.parent_id)
-
-    if q.first():
-        return jsonify(error="folder with this name already exists in this location"), 409
+    name = _unique_folder_name(name, folder.parent_id, exclude_id=folder.id)
 
     folder.name = name
     db.session.commit()

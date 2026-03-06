@@ -4,13 +4,37 @@ import requests
 from flask import Blueprint, jsonify, request, current_app
 
 from ..db import db
-from ..models import File
+from werkzeug.utils import secure_filename
+
+from ..models import File, Folder
 from ..services.google_tokens import get_valid_access_token
 
 bp = Blueprint("drive", __name__)
 
 DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files"
 DRIVE_DOWNLOAD_URL = "https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
+
+def _unique_file_name(base_name: str, folder_id: int, exclude_id: int | None = None) -> str:
+    if "." in base_name:
+        stem, ext = base_name.rsplit(".", 1)
+        ext = "." + ext
+    else:
+        stem, ext = base_name, ""
+
+    candidate = base_name
+    i = 1
+
+    while True:
+        q = File.query.filter(File.folder_id == folder_id, File.name == candidate)
+        if exclude_id is not None:
+            q = q.filter(File.id != exclude_id)
+
+        exists = q.first()
+        if not exists:
+            return candidate
+
+        candidate = f"{stem} ({i}){ext}"
+        i += 1
 
 def _get_access_token_or_401():
     try:
@@ -60,6 +84,9 @@ def drive_import_file():
         return jsonify(error="file_id is required"), 400
     if not folder_id:
         return jsonify(error="folder_id is required"), 400
+    folder = Folder.query.get(int(folder_id))
+    if not folder:
+        return jsonify(error="folder not found"), 404    
 
     headers = {"Authorization": f"Bearer {access_token}"}
 
@@ -73,6 +100,12 @@ def drive_import_file():
     name = meta_json.get("name") or "drive_file.pdf"
     mime = meta_json.get("mimeType")
     size = int(meta_json.get("size") or 0)
+
+    name = secure_filename(name) or "drive_file.pdf"
+    if not name.lower().endswith(".pdf"):
+        name = name + ".pdf"
+
+    name = _unique_file_name(name, int(folder_id))
 
     if mime != "application/pdf":
         return jsonify(error="only PDF can be imported"), 400

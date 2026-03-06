@@ -8,6 +8,28 @@ from ..services.file_storage import validate_pdf, save_pdf
 
 bp = Blueprint("files", __name__)
 
+def _unique_file_name(base_name: str, folder_id: int, exclude_id: int | None = None) -> str:
+    if "." in base_name:
+        stem, ext = base_name.rsplit(".", 1)
+        ext = "." + ext
+    else:
+        stem, ext = base_name, ""
+
+    candidate = base_name
+    i = 1
+
+    while True:
+        q = File.query.filter(File.folder_id == folder_id, File.name == candidate)
+        if exclude_id is not None:
+            q = q.filter(File.id != exclude_id)
+
+        exists = q.first()
+        if not exists:
+            return candidate
+
+        candidate = f"{stem} ({i}){ext}"
+        i += 1
+
 @bp.post("/files/upload")
 def upload_file():
     # multipart/form-data: file + folder_id
@@ -34,6 +56,8 @@ def upload_file():
     display_name = secure_filename(f.filename or "") or "file.pdf"
     if not display_name.lower().endswith(".pdf"):
         display_name = display_name + ".pdf"
+
+    display_name = _unique_file_name(display_name, folder_id)
 
     rec = File(
         folder_id=folder_id,
@@ -91,14 +115,7 @@ def rename_file(file_id: int):
     if len(name) > 255:
         return jsonify(error="name is too long"), 400
 
-    # avoid duplicates inside the same folder
-    exists = (
-        File.query
-        .filter(File.folder_id == rec.folder_id, File.name == name, File.id != rec.id)
-        .first()
-    )
-    if exists:
-        return jsonify(error="file with this name already exists in this folder"), 409
+    name = _unique_file_name(name, rec.folder_id, exclude_id=rec.id)
 
     rec.name = name
     db.session.commit()

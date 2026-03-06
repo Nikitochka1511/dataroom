@@ -1,6 +1,8 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 from .db import db
 
@@ -8,6 +10,7 @@ from .routes.folders import bp as folders_bp
 from .routes.files import bp as files_bp
 from .routes.google_auth import bp as google_auth_bp
 from .routes.drive import bp as drive_bp
+
 
 def create_app():
     app = Flask(__name__)
