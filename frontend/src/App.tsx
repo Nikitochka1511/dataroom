@@ -109,6 +109,8 @@ export default function App() {
                   selectedId={selectedFolder}
                   onSelect={setSelectedFolder}
                   reloadKey={treeReloadKey}
+                  onTreeChanged={() => setTreeReloadKey((x) => x + 1)}
+                  onFilesChanged={() => setFilesReloadKey((x) => x + 1)}
                 />
               </aside>
   

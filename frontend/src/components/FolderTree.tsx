@@ -116,17 +116,21 @@ function FolderItem({
     selectedId,
     onSelect,
     reloadKey,
+    onTreeChanged,
+    onFilesChanged,
   }: {
     selectedId: number;
     onSelect: (id: number) => void;
     reloadKey: number;
+    onTreeChanged: () => void;
+    onFilesChanged: () => void;
   }) {
   const [tree, setTree] = useState<FolderNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [newName, setNewName] = useState("");
   const [ctxMenu, setCtxMenu] = useState<{ id: number; x: number; y: number } | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set([0]));
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
 
   function isExpanded(id: number) {
     return expandedIds.has(id);
@@ -163,7 +167,9 @@ function FolderItem({
     try {
       await createFolder(name, parentId);
       setNewName("");
-      load();
+      await load();
+      onTreeChanged();
+      onFilesChanged();
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
     }
@@ -186,7 +192,9 @@ function FolderItem({
         else onSelect(0);
       }
   
-      load();
+      await load();
+      onTreeChanged();
+      onFilesChanged();
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
     }
@@ -202,6 +210,8 @@ function FolderItem({
     try {
       await renameFolder(node.id, name);
       await load();
+      onTreeChanged();
+      onFilesChanged();
       setCtxMenu(null);
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
@@ -218,6 +228,8 @@ function FolderItem({
     try {
       await createFolder(name, parent.id);
       await load();
+      onTreeChanged();
+      onFilesChanged();
       setCtxMenu(null);
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
@@ -247,13 +259,6 @@ function FolderItem({
   if (loading) return <div>Loading folders...</div>;
   if (err) return <div style={{ color: "red" }}>Error: {err}</div>;
 
-  const rootNode: FolderNode = {
-    id: 0,
-    name: "Root",
-    parent_id: null,
-    children: tree,
-  };
-
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
@@ -263,22 +268,24 @@ function FolderItem({
       {tree.length === 0 ? (
   <div>No folders yet.</div>
 ) : (
-  <FolderItem
-    node={rootNode}
-    level={0}
-    onSelect={onSelect}
-    onDelete={handleDelete}
-    onRename={handleRenameFolder}
-    onCreateSubfolder={handleCreateSubfolder}
-    selectedId={selectedId}
-    onToggle={toggleExpanded}
-    isExpanded={isExpanded}
-    onContext={(id, x, y) => {
-      setCtxMenu({ id, x, y });
-    }}
-  />
+  tree.map((node) => (
+    <FolderItem
+      key={node.id}
+      node={node}
+      level={0}
+      onSelect={onSelect}
+      onDelete={handleDelete}
+      onRename={handleRenameFolder}
+      onCreateSubfolder={handleCreateSubfolder}
+      selectedId={selectedId}
+      onToggle={toggleExpanded}
+      isExpanded={isExpanded}
+      onContext={(id, x, y) => {
+        setCtxMenu({ id, x, y });
+      }}
+    />
+  ))
 )}
-
 {ctxMenu ? (
   <div
     onClick={(e) => e.stopPropagation()}
