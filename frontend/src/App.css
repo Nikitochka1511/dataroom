@@ -29,29 +29,38 @@ html, body, #root {
   border-radius: 16px;
   background: rgba(255,255,255,0.02);
   overflow: hidden;
+  position: relative;
 }
 
 /* Header */
 .appHeader {
-  height: 56px;
-  display: flex;
+  height: 46px;
+  display: grid;
+  grid-template-columns: 320px 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.appTitle {
-  font-size: 20px;
-  font-weight: 700;
-  font-family: "Times New Roman", Times, serif;
+.appHeaderLeft {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  border-right: 1px solid rgba(255,255,255,0.08);
 }
 
+.appTitle {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: "Times New Roman", Times, serif;
+  color: rgba(255,255,255,0.96);
+  line-height: 1.2;
+}
 /* Body layout like Explorer */
 .appBody {
   display: grid;
-  grid-template-columns: 320px 1fr; /* left tree, right contents */
-  min-height: calc(100vh - 32px - 56px);
+  grid-template-columns: 320px 1fr;
+  min-height: calc(100vh - 32px - 46px);
 }
 
 .sidebar {
@@ -61,7 +70,7 @@ html, body, #root {
 }
 
 .content {
-  padding: 12px;
+  padding: 10px 12px 12px;
   overflow: auto;
 }
 
@@ -425,4 +434,131 @@ html, body, #root {
   height: 16px;
   margin-right: 8px;
   object-fit: contain;
+}
+
+.appHeaderSpacer {
+  flex: 1;
+}
+
+.sidebarSectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  margin-bottom: 10px;
+  margin-top: 2px;
+}
+.contentTopBar {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 10px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.breadcrumbSegment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.breadcrumbSep {
+  opacity: 0.4;
+  font-size: 12px;
+}
+
+.breadcrumbItem {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.72);
+  padding: 0;
+  font-size: 13px;
+  cursor: pointer;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breadcrumbItem:hover {
+  color: rgba(255,255,255,0.96);
+}
+
+.breadcrumbItemActive {
+  color: rgba(255,255,255,0.98);
+  font-weight: 600;
+}
+
+.appHeaderPath {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 12px;
+}
+
+.breadcrumbsInHeader {
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.breadcrumbSegment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.breadcrumbSep {
+  opacity: 0.4;
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+
+.breadcrumbItem {
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  color: rgba(255,255,255,0.72);
+  padding: 0;
+  font-size: 13px;
+  cursor: pointer;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 0;
+}
+
+.breadcrumbItem:hover {
+  color: rgba(255,255,255,0.96);
+}
+
+.breadcrumbItem:focus,
+.breadcrumbItem:focus-visible,
+.breadcrumbItem:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.breadcrumbItemActive {
+  color: rgba(255,255,255,0.98);
+  font-weight: 600;
 }

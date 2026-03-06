@@ -3,8 +3,7 @@ import FolderTree from "./components/FolderTree";
 import FileList from "./components/FileList";
 import "./App.css";
 import WelcomeGate from "./components/WelcomeGate";
-import { googleStatus, googleLogout } from "./api";
-
+import { googleStatus, googleLogout, listFolderPath, type FolderPathItem } from "./api";
 
 const API_BASE = "http://127.0.0.1:5000";
 
@@ -31,6 +30,7 @@ export default function App() {
   const [googleStatusMsg, setGoogleStatusMsg] = useState("");
 
   const [appReady, setAppReady] = useState(false);
+  const [folderPath, setFolderPath] = useState<FolderPathItem[]>([]);
 
   function connectGoogle() {
     setGoogleStatusMsg("");
@@ -61,6 +61,30 @@ export default function App() {
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+  
+    async function loadPath() {
+      if (!selectedFolder || selectedFolder === 0) {
+        setFolderPath([]);
+        return;
+      }
+  
+      try {
+        const path = await listFolderPath(selectedFolder);
+        if (!cancelled) setFolderPath(path);
+      } catch {
+        if (!cancelled) setFolderPath([]);
+      }
+    }
+  
+    loadPath();
+  
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedFolder]);
+
   return (
     <div className="appPage">
       <div className="appShell">
@@ -73,9 +97,36 @@ export default function App() {
         ) : (
           <>
             <div className="appHeader">
-              <div className="appTitle">Harvey: Data Room</div>
-  
-              <div className="appHeaderRight">
+  <div className="appHeaderLeft">
+    <div className="appTitle">Harvey: Data Room</div>
+  </div>
+
+  <div className="appHeaderPath">
+    <div className="breadcrumbs breadcrumbsInHeader">
+      <button
+        className={`breadcrumbItem ${selectedFolder === 0 ? "breadcrumbItemActive" : ""}`}
+        onClick={() => setSelectedFolder(0)}
+        type="button"
+      >
+        Root
+      </button>
+
+      {folderPath.map((item) => (
+        <div key={item.id} className="breadcrumbSegment">
+          <span className="breadcrumbSep">/</span>
+          <button
+            className={`breadcrumbItem ${item.id === selectedFolder ? "breadcrumbItemActive" : ""}`}
+            onClick={() => setSelectedFolder(item.id)}
+            type="button"
+          >
+            {item.name}
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div className="appHeaderRight">
                 <button
                   className="btn"
                   onClick={async () => {
@@ -89,7 +140,7 @@ export default function App() {
                   }}
                   title="Sign out from Google Drive"
                 >
-                  ⋯ Sign out
+                Sign out
                 </button>
               </div>
             </div>

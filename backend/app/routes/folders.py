@@ -86,6 +86,24 @@ def rename_folder(folder_id: int):
     db.session.commit()
     return jsonify(folder.to_dict()), 200
 
+@bp.get("/folders/<int:folder_id>/path")
+def folder_path(folder_id: int):
+    folder = Folder.query.get(folder_id)
+    if not folder:
+        return jsonify(error="folder not found"), 404
+
+    path = []
+    current = folder
+
+    while current is not None:
+        path.append(current.to_dict())
+        if current.parent_id is None:
+            break
+        current = Folder.query.get(current.parent_id)
+
+    path.reverse()
+    return jsonify(path)
+
 @bp.get("/folders/tree")
 def folders_tree():
     folders = Folder.query.all()

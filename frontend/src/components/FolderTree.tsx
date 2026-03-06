@@ -256,9 +256,7 @@ function FolderItem({
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 16 }}>Documents</h2>
-      </div>
+      <div className="sidebarSectionTitle">Documents</div>
   
       {tree.length === 0 ? (
   <div>No folders yet.</div>

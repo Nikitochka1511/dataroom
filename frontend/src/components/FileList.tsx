@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { API_BASE, listFiles, listChildFolders, uploadFile, deleteFile, listDriveFiles, importDriveFile, type DriveFile, renameFile, createFolder } from "../api";
+import { API_BASE, listFiles, listChildFolders, uploadFile, deleteFile, listDriveFiles, importDriveFile, type DriveFile, renameFile, createFolder, } from "../api";
 type FileRec = {
   id: number;
   name: string;
@@ -47,7 +47,7 @@ type ChildFolder = {
       setError("");
       setLoading(true);
   
-      const [childFolders, fileList] = await Promise.all([
+      const [childFolders, fileList ] = await Promise.all([
         listChildFolders(folderId),
         listFiles(folderId),
       ]);
@@ -56,8 +56,8 @@ type ChildFolder = {
       setFiles(fileList);
     } catch (err) {
       setFiles([]);
-      setFolders([]);
-      setError(err instanceof Error ? err.message : String(err));
+setFolders([]);
+setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -234,6 +234,7 @@ if (!trimmed.toLowerCase().endsWith(".pdf")) {
 
   return (
     <div>
+  
       <div className="toolbar">
   
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

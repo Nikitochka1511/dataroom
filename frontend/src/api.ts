@@ -4,6 +4,12 @@ export type FolderNode = {
     parent_id: number | null;
     children: FolderNode[];
   };
+
+  export type FolderPathItem = {
+    id: number;
+    name: string;
+    parent_id: number | null;
+  };
   
   const API_BASE = "http://127.0.0.1:5000";
   export { API_BASE };
@@ -20,6 +26,15 @@ export type FolderNode = {
     return r.json();
   }
   
+  export async function listFolderPath(folderId: number): Promise<FolderPathItem[]> {
+    const r = await fetch(`${API_BASE}/folders/${folderId}/path`);
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to load folder path");
+    }
+    return r.json();
+  }
+
   export async function googleLogout(): Promise<void> {
     const r = await fetch(`${API_BASE}/auth/google/logout`, { method: "POST" });
     if (!r.ok) {
