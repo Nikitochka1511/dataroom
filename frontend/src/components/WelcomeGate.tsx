@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { googleStatus } from "../api";
 
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = "https://dataroom-b3qr.onrender.com";
 
 function openCenteredPopup(url: string, title: string, w = 520, h = 700) {
   const dualScreenLeft = (window as any).screenLeft ?? window.screenX;
