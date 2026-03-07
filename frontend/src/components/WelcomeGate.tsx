@@ -84,7 +84,7 @@ export default function WelcomeGate({
   return (
     <div className="welcomeWrap">
       <div className="welcomeInner">
-  <div className="welcomeBrand">Harvey: Data Room</div>
+  <div className="welcomeBrand">Data Room</div>
 
   <div className="welcomeCard">
     <h2 className="welcomeTitle">Welcome back</h2>

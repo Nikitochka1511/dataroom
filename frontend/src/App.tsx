@@ -67,7 +67,7 @@ export default function App() {
           <>
             <div className="appHeader">
   <div className="appHeaderLeft">
-    <div className="appTitle">Harvey: Data Room</div>
+    <div className="appTitle">Data Room</div>
   </div>
 
   <div className="appHeaderPath">
