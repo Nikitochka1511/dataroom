@@ -8,20 +8,6 @@ import SearchModal from "./components/SearchModal";
 
 const API_BASE = "https://dataroom-b3qr.onrender.com";
 
-function openCenteredPopup(url: string, title: string, w = 520, h = 700) {
-  const dualScreenLeft = window.screenLeft ?? window.screenX;
-  const dualScreenTop = window.screenTop ?? window.screenY;
-
-  const width = window.innerWidth ?? document.documentElement.clientWidth ?? screen.width;
-  const height = window.innerHeight ?? document.documentElement.clientHeight ?? screen.height;
-
-  const left = width / 2 - w / 2 + dualScreenLeft;
-  const top = height / 2 - h / 2 + dualScreenTop;
-
-  const features = `scrollbars=yes,width=${w},height=${h},top=${top},left=${left}`;
-  return window.open(url, title, features);
-}
-
 export default function App() {
   const [selectedFolder, setSelectedFolder] = useState(0);
   const [treeReloadKey, setTreeReloadKey] = useState(0);
