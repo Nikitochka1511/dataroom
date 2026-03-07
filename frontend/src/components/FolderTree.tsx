@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchFolderTree, FolderNode, createFolder, deleteFolder, renameFolder } from "../api";
+import { fetchFolderTree, createFolder, deleteFolder, renameFolder } from "../api";
+import type { FolderNode } from "../api";
 
 function FolderItem({
     node,
@@ -123,7 +124,6 @@ function FolderItem({
   const [tree, setTree] = useState<FolderNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [newName, setNewName] = useState("");
   const [ctxMenu, setCtxMenu] = useState<{ id: number; x: number; y: number } | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
 
@@ -150,23 +150,6 @@ function FolderItem({
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleCreate() {
-    const name = newName.trim();
-    if (!name) return;
-  
-    const parentId = selectedId === 0 ? null : selectedId;
-  
-    try {
-      await createFolder(name, parentId);
-      setNewName("");
-      await load();
-      onTreeChanged();
-      onFilesChanged();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : String(e));
     }
   }
 
