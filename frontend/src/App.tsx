@@ -3,10 +3,10 @@ import FolderTree from "./components/FolderTree";
 import FileList from "./components/FileList";
 import "./App.css";
 import WelcomeGate from "./components/WelcomeGate";
-import { googleStatus, googleLogout, listFolderPath, type FolderPathItem } from "./api";
+import { googleLogout, listFolderPath, type FolderPathItem } from "./api";
 import SearchModal from "./components/SearchModal";
 
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = "https://dataroom-b3qr.onrender.com";
 
 function openCenteredPopup(url: string, title: string, w = 520, h = 700) {
   const dualScreenLeft = window.screenLeft ?? window.screenX;
@@ -27,37 +27,17 @@ export default function App() {
   const [treeReloadKey, setTreeReloadKey] = useState(0);
   const [filesReloadKey, setFilesReloadKey] = useState(0);
 
-  const [googleConnected, setGoogleConnected] = useState(false);
-  const [googleStatusMsg, setGoogleStatusMsg] = useState("");
-
   const [appReady, setAppReady] = useState(false);
   const [folderPath, setFolderPath] = useState<FolderPathItem[]>([]);
 
   const [showSearch, setShowSearch] = useState(false);
 
-  function connectGoogle() {
-    setGoogleStatusMsg("");
-    const popup = openCenteredPopup(`${API_BASE}/auth/google/login`, "Connect Google Drive");
-    if (!popup) {
-      setGoogleStatusMsg("Popup blocked. Allow popups for this site.");
-    }
-  }
-
   useEffect(() => {
     function onMessage(event: MessageEvent) {
-      // безпечно: приймаємо тільки повідомлення від нашого backend
       if (event.origin !== API_BASE) return;
 
       const data = event.data;
       if (!data || data.type !== "google_oauth_result") return;
-
-      if (data.ok) {
-        setGoogleConnected(true);
-        setGoogleStatusMsg("Google Drive connected ✅");
-      } else {
-        setGoogleConnected(false);
-        setGoogleStatusMsg(`Google Drive error: ${data.message || "unknown error"}`);
-      }
     }
 
     window.addEventListener("message", onMessage);
@@ -148,8 +128,6 @@ export default function App() {
                       await googleLogout();
                     } finally {
                       setAppReady(false);
-                      setGoogleConnected(false);
-                      setGoogleStatusMsg("");
                     }
                   }}
                   title="Sign out from Google Drive"
