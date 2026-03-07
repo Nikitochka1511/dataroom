@@ -19,7 +19,7 @@ export type FolderNode = {
     path: string;
   };
   
-  const API_BASE = "https://dataroom-b3qr.onrender.com";
+  const API_BASE = "http://127.0.0.1:5000";
   export { API_BASE };
   
   export async function searchItems(query: string): Promise<SearchItem[]> {
