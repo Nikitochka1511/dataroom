@@ -18,8 +18,8 @@ DRIVE_SCOPES = "https://www.googleapis.com/auth/drive.readonly"
 def _cfg():
     client_id = os.getenv("GOOGLE_CLIENT_ID")
     client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/auth/google/callback")
-    frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "https://dataroom-b3qr.onrender.com/auth/google/callback")
+    frontend_origin = os.getenv("FRONTEND_ORIGIN", "https://dataroom-front.onrender.com")
 
     if not client_id or not client_secret:
         raise RuntimeError("Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET env vars")
