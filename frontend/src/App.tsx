@@ -6,8 +6,6 @@ import WelcomeGate from "./components/WelcomeGate";
 import { googleLogout, listFolderPath, type FolderPathItem } from "./api";
 import SearchModal from "./components/SearchModal";
 
-const API_BASE = "https://dataroom-b3qr.onrender.com";
-
 export default function App() {
   const [selectedFolder, setSelectedFolder] = useState(0);
   const [treeReloadKey, setTreeReloadKey] = useState(0);
@@ -17,18 +15,6 @@ export default function App() {
   const [folderPath, setFolderPath] = useState<FolderPathItem[]>([]);
 
   const [showSearch, setShowSearch] = useState(false);
-
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== API_BASE) return;
-
-      const data = event.data;
-      if (!data || data.type !== "google_oauth_result") return;
-    }
-
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,10 +45,15 @@ export default function App() {
       <div className="appShell">
         {!appReady ? (
           <WelcomeGate
-            onConnected={() => {
-              setAppReady(true);
-            }}
-          />
+          onConnected={() => {
+            setSelectedFolder(0);
+            setFolderPath([]);
+            setShowSearch(false);
+            setTreeReloadKey((x) => x + 1);
+            setFilesReloadKey((x) => x + 1);
+            setAppReady(true);
+          }}
+        />
         ) : (
           <>
             <div className="appHeader">
@@ -107,19 +98,24 @@ export default function App() {
   Search...
 </button>
 
-                <button
-                  className="btn"
-                  onClick={async () => {
-                    try {
-                      await googleLogout();
-                    } finally {
-                      setAppReady(false);
-                    }
-                  }}
-                  title="Sign out from Google Drive"
-                >
-                Sign out
-                </button>
+<button
+  className="btn"
+  onClick={async () => {
+    try {
+      await googleLogout();
+    } finally {
+      setShowSearch(false);
+      setFolderPath([]);
+      setSelectedFolder(0);
+      setTreeReloadKey((x) => x + 1);
+      setFilesReloadKey((x) => x + 1);
+      setAppReady(false);
+    }
+  }}
+  title="Sign out from Google Drive"
+>
+  Sign out
+</button>
               </div>
             </div>
   

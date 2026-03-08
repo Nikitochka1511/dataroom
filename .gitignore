@@ -11,9 +11,15 @@ backend/*.pyc
 backend/storage/
 backend/dataroom.db
 backend/instance/
+*.db
 
 # Env
 backend/.env
+frontend/.env.local
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+!backend/.env.example
 
 # OS
 .DS_Store

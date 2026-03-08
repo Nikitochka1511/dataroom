@@ -1,18 +1,23 @@
 import os
-from flask import Blueprint, jsonify, request, send_file, current_app
+
+from flask import Blueprint, jsonify, request, send_file, current_app, session
 from werkzeug.utils import secure_filename
 
 from ..db import db
 from ..models import Folder, File
 from ..services.file_storage import validate_pdf, save_pdf
 
-from flask import request, jsonify
-from sqlalchemy import or_
-
 bp = Blueprint("files", __name__)
 
 
-def build_folder_path(folder):
+def _require_user_id():
+    user_id = session.get("user_id")
+    if not user_id:
+        return None, (jsonify(error="unauthorized"), 401)
+    return user_id, None
+
+
+def build_folder_path(user_id: int, folder):
     parts = []
     current = folder
 
@@ -22,11 +27,17 @@ def build_folder_path(folder):
         if current.parent_id is None:
             break
 
-        current = Folder.query.get(current.parent_id)
+        current = Folder.query.filter_by(id=current.parent_id, user_id=user_id).first()
 
     return "Root / " + " / ".join(reversed(parts))
 
-def _unique_file_name(base_name: str, folder_id: int, exclude_id: int | None = None) -> str:
+
+def _unique_file_name(
+    user_id: int,
+    base_name: str,
+    folder_id: int,
+    exclude_id: int | None = None,
+) -> str:
     if "." in base_name:
         stem, ext = base_name.rsplit(".", 1)
         ext = "." + ext
@@ -37,7 +48,12 @@ def _unique_file_name(base_name: str, folder_id: int, exclude_id: int | None = N
     i = 1
 
     while True:
-        q = File.query.filter(File.folder_id == folder_id, File.name == candidate)
+        q = File.query.filter(
+            File.user_id == user_id,
+            File.folder_id == folder_id,
+            File.name == candidate,
+        )
+
         if exclude_id is not None:
             q = q.filter(File.id != exclude_id)
 
@@ -47,8 +63,14 @@ def _unique_file_name(base_name: str, folder_id: int, exclude_id: int | None = N
 
         candidate = f"{stem} ({i}){ext}"
         i += 1
+
+
 @bp.get("/search")
 def search_items():
+    user_id, err = _require_user_id()
+    if err:
+        return err
+
     q = (request.args.get("q") or "").strip()
 
     if not q:
@@ -56,7 +78,10 @@ def search_items():
 
     folder_matches = (
         Folder.query
-        .filter(Folder.name.ilike(f"%{q}%"))
+        .filter(
+            Folder.user_id == user_id,
+            Folder.name.ilike(f"%{q}%"),
+        )
         .order_by(Folder.name.asc())
         .limit(20)
         .all()
@@ -64,7 +89,10 @@ def search_items():
 
     file_matches = (
         File.query
-        .filter(File.name.ilike(f"%{q}%"))
+        .filter(
+            File.user_id == user_id,
+            File.name.ilike(f"%{q}%"),
+        )
         .order_by(File.name.asc())
         .limit(20)
         .all()
@@ -73,7 +101,7 @@ def search_items():
     results = []
 
     for folder in folder_matches:
-        folder_path = build_folder_path(folder)
+        folder_path = build_folder_path(user_id, folder)
 
         results.append({
             "id": folder.id,
@@ -86,9 +114,9 @@ def search_items():
     for file in file_matches:
         folder_path = "Root"
 
-        parent_folder = Folder.query.get(file.folder_id)
+        parent_folder = Folder.query.filter_by(id=file.folder_id, user_id=user_id).first()
         if parent_folder is not None:
-            folder_path = build_folder_path(parent_folder)
+            folder_path = build_folder_path(user_id, parent_folder)
 
         results.append({
             "id": file.id,
@@ -100,10 +128,13 @@ def search_items():
 
     return jsonify(results)
 
-    
+
 @bp.post("/files/upload")
 def upload_file():
-    # multipart/form-data: file + folder_id
+    user_id, err = _require_user_id()
+    if err:
+        return err
+
     folder_id = request.form.get("folder_id", type=int)
     f = request.files.get("file")
 
@@ -112,7 +143,7 @@ def upload_file():
     if not f:
         return jsonify(error="file is required"), 400
 
-    folder = Folder.query.get(folder_id)
+    folder = Folder.query.filter_by(id=folder_id, user_id=user_id).first()
     if not folder:
         return jsonify(error="folder not found"), 404
 
@@ -128,9 +159,10 @@ def upload_file():
     if not display_name.lower().endswith(".pdf"):
         display_name = display_name + ".pdf"
 
-    display_name = _unique_file_name(display_name, folder_id)
+    display_name = _unique_file_name(user_id, display_name, folder_id)
 
     rec = File(
+        user_id=user_id,
         folder_id=folder_id,
         name=display_name,
         storage_path=full_path,
@@ -142,30 +174,54 @@ def upload_file():
 
     return jsonify(rec.to_dict()), 201
 
+
 @bp.get("/folders/<int:folder_id>/files")
 def list_files(folder_id: int):
-    folder = Folder.query.get(folder_id)
+    user_id, err = _require_user_id()
+    if err:
+        return err
+
+    folder = Folder.query.filter_by(id=folder_id, user_id=user_id).first()
     if not folder:
         return jsonify(error="folder not found"), 404
 
-    files = File.query.filter_by(folder_id=folder_id).order_by(File.created_at.desc()).all()
+    files = (
+        File.query
+        .filter_by(folder_id=folder_id, user_id=user_id)
+        .order_by(File.created_at.desc())
+        .all()
+    )
     return jsonify([x.to_dict() for x in files])
+
 
 @bp.get("/files/<int:file_id>/view")
 def view_file(file_id: int):
-    rec = File.query.get(file_id)
+    user_id, err = _require_user_id()
+    if err:
+        return err
+
+    rec = File.query.filter_by(id=file_id, user_id=user_id).first()
     if not rec:
         return jsonify(error="file not found"), 404
 
     if not os.path.exists(rec.storage_path):
         return jsonify(error="file missing on disk"), 500
 
+    return send_file(
+        rec.storage_path,
+        mimetype=rec.mime_type,
+        as_attachment=False,
+        download_name=rec.name,
+    )
 
-    return send_file(rec.storage_path, mimetype=rec.mime_type, as_attachment=False, download_name=rec.name)
 
 @bp.patch("/files/<int:file_id>")
 def rename_file(file_id: int):
-    rec = File.query.get(file_id)
+    user_id, err = _require_user_id()
+    if err:
+        return err
+
+    rec = File.query.filter_by(id=file_id, user_id=user_id).first()
     if not rec:
         return jsonify(error="file not found"), 404
 
@@ -174,38 +230,39 @@ def rename_file(file_id: int):
     if not raw_name:
         return jsonify(error="name is required"), 400
 
-    # sanitize display name (this does NOT rename the disk file)
     name = secure_filename(raw_name)
     if not name:
         return jsonify(error="invalid name"), 400
 
-    # enforce .pdf for consistency
     if not name.lower().endswith(".pdf"):
         return jsonify(error="only .pdf names are allowed"), 400
 
     if len(name) > 255:
         return jsonify(error="name is too long"), 400
 
-    name = _unique_file_name(name, rec.folder_id, exclude_id=rec.id)
+    name = _unique_file_name(user_id, name, rec.folder_id, exclude_id=rec.id)
 
     rec.name = name
     db.session.commit()
-    return jsonify(rec.to_dict()), 200    
+    return jsonify(rec.to_dict()), 200
+
 
 @bp.delete("/files/<int:file_id>")
 def delete_file(file_id: int):
-    rec = File.query.get(file_id)
+    user_id, err = _require_user_id()
+    if err:
+        return err
+
+    rec = File.query.filter_by(id=file_id, user_id=user_id).first()
     if not rec:
         return jsonify(error="file not found"), 404
 
-    
     try:
         if os.path.exists(rec.storage_path):
             os.remove(rec.storage_path)
     except OSError:
         return jsonify(error="failed to delete file from disk"), 500
 
-    
     db.session.delete(rec)
     db.session.commit()
 

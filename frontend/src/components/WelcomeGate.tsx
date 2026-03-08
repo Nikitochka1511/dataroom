@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { googleStatus } from "../api";
-
-const API_BASE = "https://dataroom-b3qr.onrender.com";
+import { API_BASE, googleStatus } from "../api";
 
 function openCenteredPopup(url: string, title: string, w = 520, h = 700) {
   const dualScreenLeft = (window as any).screenLeft ?? window.screenX;
@@ -51,15 +49,22 @@ export default function WelcomeGate({
     refreshStatus();
 
     function onMessage(event: MessageEvent) {
-      if (event.origin !== API_BASE) return;
+      
+
+      if (event.origin !== new URL(API_BASE).origin) {
+        return;
+      }
+
       const data = event.data;
-      if (!data || data.type !== "google_oauth_result") return;
+      if (!data || data.type !== "google_oauth_result") {
+        return;
+      }
 
       if (data.ok) {
         setMsg("Google Drive connected ✅");
-        // важливо: після OAuth перевіряємо status ще раз
         refreshStatus();
       } else {
+        console.log("MAIN received oauth error");
         setErr(`Google Drive error: ${data.message || "unknown error"}`);
       }
     }

@@ -1,6 +1,15 @@
 import os
+
+print("CLIENT_ID =", os.getenv("GOOGLE_CLIENT_ID"))
+secret = os.getenv("GOOGLE_CLIENT_SECRET")
+print("SECRET_LAST4 =", secret[-4:] if secret else None)
+print("REDIRECT_URI =", os.getenv("GOOGLE_REDIRECT_URI"))
+print("FRONTEND_ORIGIN =", os.getenv("FRONTEND_ORIGIN"))
+
 from datetime import datetime, timedelta
+
 import requests
+from flask import session
 
 from ..db import db
 from ..models import GoogleToken
@@ -9,11 +18,14 @@ GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 
 def get_valid_access_token() -> str:
-    tok = GoogleToken.query.first()
+    user_id = session.get("user_id")
+    if not user_id:
+        raise RuntimeError("User is not authenticated")
+
+    tok = GoogleToken.query.filter_by(user_id=user_id).first()
     if not tok or not tok.access_token:
         raise RuntimeError("Google is not connected")
 
-    # якщо вже протермінований (або майже)
     if tok.expires_at and tok.expires_at <= datetime.utcnow() + timedelta(seconds=30):
         if not tok.refresh_token:
             raise RuntimeError("Missing refresh token. Reconnect Google Drive.")
