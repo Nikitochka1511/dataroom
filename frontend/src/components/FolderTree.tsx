@@ -107,6 +107,19 @@ function FolderItem({
     return (node.children || []).some((c) => subtreeContains(c, targetId));
   }
 
+  function findPathToNode(nodes: FolderNode[], targetId: number): number[] {
+    for (const node of nodes) {
+      if (node.id === targetId) return [node.id];
+  
+      const childPath = findPathToNode(node.children || [], targetId);
+      if (childPath.length > 0) {
+        return [node.id, ...childPath];
+      }
+    }
+  
+    return [];
+  }
+
 
   export default function FolderTree({
     selectedId,
@@ -199,12 +212,20 @@ function FolderItem({
   async function handleCreateSubfolder(parent: FolderNode) {
     const nameRaw = window.prompt(`Create folder inside "${parent.name}":`, "");
     if (!nameRaw) return;
-  
+
     const name = nameRaw.trim();
     if (!name) return;
-  
+
     try {
-      await createFolder(name, parent.id);
+      const created = await createFolder(name, parent.id);
+
+      setExpandedIds((prev) => {
+        const next = new Set(prev);
+        next.add(parent.id);
+        return next;
+      });
+
+      onSelect(created.id);
       await load();
       onTreeChanged();
       onFilesChanged();
@@ -218,6 +239,22 @@ function FolderItem({
   useEffect(() => {
     load();
   }, [reloadKey]);
+
+  useEffect(() => {
+    if (!selectedId || selectedId === 0) return;
+
+    const pathIds = findPathToNode(tree, selectedId);
+    if (pathIds.length === 0) return;
+
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of pathIds.slice(0, -1)) {
+        next.add(id);
+      }
+      return next;
+    });
+  }, [tree, selectedId]);
+
  
   useEffect(() => {
     function closeMenu() {

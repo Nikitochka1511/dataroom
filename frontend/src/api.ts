@@ -66,10 +66,17 @@ const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`, FET
     }
   }
 
+  export type FolderRecord = {
+    id: number;
+    name: string;
+    parent_id: number | null;
+    user_id?: number;
+  };
+  
   export async function createFolder(
     name: string,
     parent_id: number | null
-  ): Promise<void> {
+  ): Promise<FolderRecord> {
     const r = await fetch(`${API_BASE}/folders`, {
       method: "POST",
       credentials: "include",
@@ -79,7 +86,16 @@ const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`, FET
       body: JSON.stringify({ name, parent_id }),
     });
   
-    if (!r.ok) throw new Error(`Failed to create folder: ${r.status}`);
+    if (!r.ok) {
+      let msg = `Failed to create folder: ${r.status}`;
+      try {
+        const data = await r.json();
+        if (data?.error) msg = data.error;
+      } catch {}
+      throw new Error(msg);
+    }
+  
+    return r.json();
   }
 
   export async function renameFolder(folderId: number, name: string): Promise<void> {

@@ -114,21 +114,21 @@ setError(err instanceof Error ? err.message : String(err));
 
   async function handleNewFolder() {
     setError("");
-  
+
     const nameRaw = window.prompt("New folder name:", "");
     if (!nameRaw) return;
-  
+
     const name = nameRaw.trim();
     if (!name) return;
-  
+
     const parentId = folderId === 0 ? null : folderId;
-  
+
     try {
       setLoading(true);
-      await createFolder(name, parentId);
-      await load();
+      const created = await createFolder(name, parentId);
       onTreeChanged();
       onFilesChanged();
+      onSelectFolder(created.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
